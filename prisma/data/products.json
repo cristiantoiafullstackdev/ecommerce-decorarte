@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Mesa de Comedor Industrial",
+    "slug": "mesa-comedor-industrial-madera",
+    "description": "Mesa robusta de madera maciza de paraíso con base de hierro.",
+    "price": 85000,
+    "stock": 5,
+    "categorySlug": "muebles-interior",
+    "images": ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88"]
+  },
+  {
+    "title": "Estante Flotante Rústico",
+    "slug": "estante-flotante-rustico-madera",
+    "description": "Estante de madera recuperada con acabado en barniz mate.",
+    "price": 12500,
+    "stock": 15,
+    "categorySlug": "decoracion-rustica",
+    "images": ["https://images.unsplash.com/photo-1594026112284-02bb6f3352fe"]
+  },
+  {
+    "title": "Silla Minimalista Nórdica",
+    "slug": "silla-minimalista-nordica",
+    "description": "Silla de madera de haya con diseño ergonómico.",
+    "price": 22000,
+    "stock": 10,
+    "categorySlug": "muebles-interior",
+    "images": ["https://images.unsplash.com/photo-1503602642458-232111445657"]
+  }
+]

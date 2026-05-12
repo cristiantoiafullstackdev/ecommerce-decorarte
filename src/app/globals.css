@@ -1,26 +1,52 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Reset básico */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Fuente base para cuerpo de texto (moderna, legible) */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  background-color: #FAFAFA; /* tono cálido, estilo madera */
+  color: #2c2c2c;
+  line-height: 1.6;
+}
+
+/* Box-sizing universal */
+* {
+  box-sizing: border-box;
+}
+
+/* Links coherentes con estilo artesanal */
+a {
+  color: #8B5E3C; /* marrón madera */
+  text-decoration: none;
+}
+a:hover {
+  color: #A0522D; /* hierro oxidado */
+}
+
+/* Títulos con fuente robusta (Slab Serif) */
+h1, h2, h3 {
+  font-family: 'Roboto Slab', serif;
+  margin: 0.5em 0;
+}
+
+/* Mobile-first: tipografía y tamaños base pensados para pantallas pequeñas */
+h1 {
+  font-size: 1.8rem; /* base en mobile */
+}
+h2 {
+  font-size: 1.4rem;
+}
+p {
+  font-size: 1rem;
+}
+
+/* Escalado progresivo para pantallas más grandes */
+@media (min-width: 768px) {
+  h1 { font-size: 2.4rem; }
+  h2 { font-size: 1.8rem; }
+  p  { font-size: 1.1rem; }
 }
