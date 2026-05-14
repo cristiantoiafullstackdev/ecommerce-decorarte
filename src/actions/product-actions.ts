@@ -1,27 +1,19 @@
 'use server';
 
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
-
-// Configuramos el mismo adaptador que usamos en el seed para mantener consistencia
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const adapter = new PrismaPg(pool as any);
-const prisma = new PrismaClient({ adapter });
+import prisma from "@/lib/prisma";
+import { Product, Category } from "@prisma/client";
 
 /**
  * Obtiene todos los productos de la base de datos
  */
-export const getPaginatedProducts = async () => {
+export const getPaginatedProducts = async (): Promise<(Product & { category: Category })[]> => {
   try {
     const products = await prisma.product.findMany({
       include: {
-        category: true, // Esto nos trae la información de la categoría asociada
+        category: true,
       },
       orderBy: {
-        createdAt: 'desc', // Los más nuevos primero
+        createdAt: 'desc',
       },
     });
 
@@ -35,7 +27,7 @@ export const getPaginatedProducts = async () => {
 /**
  * Obtiene todas las categorías para los filtros
  */
-export const getCategories = async () => {
+export const getCategories = async (): Promise<Category[]> => {
   try {
     return await prisma.category.findMany({
       orderBy: { name: 'asc' },
@@ -43,5 +35,28 @@ export const getCategories = async () => {
   } catch (error) {
     console.error("Error al obtener categorías:", error);
     return [];
+  }
+};
+
+/**
+ * Obtiene producto por Slug
+ */
+export const getProductBySlug = async (slug: string): Promise<(Product & { category: Category }) | null> => {
+  try {
+    console.log("Accediendo a la DB con slug:", slug);
+
+    const product = await prisma.product.findFirst({
+      where: { slug },
+      include: { category: true },
+    });
+
+    if (!product) {
+      console.log("⚠️ No se encontró nada en la DB para el slug:", slug);
+    }
+
+    return product;
+  } catch (error) {
+    console.error("Error en DB:", error);
+    return null;
   }
 };
