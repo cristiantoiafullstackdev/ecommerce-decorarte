@@ -1,3 +1,12 @@
+@import "tailwindcss";
+/* 🎨 Variables globales de color */
+:root {
+  --color-nogal: #4E3B31;      /* Principal */
+  --color-cedro: #4D1919;      /* Secundario */
+  --color-roble: #D2691E;      /* Texto */
+  --color-algarrobo: #7B463B;  /* Bordes y sombras */
+}
+
 /* Reset básico */
 html, body {
   margin: 0;
@@ -5,48 +14,17 @@ html, body {
   height: 100%;
 }
 
-/* Fuente base para cuerpo de texto (moderna, legible) */
+/* Fuente base para cuerpo de texto */
 body {
-  font-family: 'Montserrat', sans-serif;
-  background-color: #FAFAFA; /* tono cálido, estilo madera */
-  color: #2c2c2c;
-  line-height: 1.6;
-}
+  font-family: 'Roboto', sans-serif;
+}  
 
 /* Box-sizing universal */
 * {
   box-sizing: border-box;
 }
 
-/* Links coherentes con estilo artesanal */
-a {
-  color: #8B5E3C; /* marrón madera */
-  text-decoration: none;
-}
-a:hover {
-  color: #A0522D; /* hierro oxidado */
-}
-
-/* Títulos con fuente robusta (Slab Serif) */
+/* Títulos (Slab Serif) */
 h1, h2, h3 {
   font-family: 'Roboto Slab', serif;
-  margin: 0.5em 0;
-}
-
-/* Mobile-first: tipografía y tamaños base pensados para pantallas pequeñas */
-h1 {
-  font-size: 1.8rem; /* base en mobile */
-}
-h2 {
-  font-size: 1.4rem;
-}
-p {
-  font-size: 1rem;
-}
-
-/* Escalado progresivo para pantallas más grandes */
-@media (min-width: 768px) {
-  h1 { font-size: 2.4rem; }
-  h2 { font-size: 1.8rem; }
-  p  { font-size: 1.1rem; }
 }

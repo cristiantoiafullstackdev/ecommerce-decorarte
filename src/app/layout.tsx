@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Montserrat, Roboto_Slab } from 'next/font/google'
-import './globals.css'
+import { Roboto_Slab } from 'next/font/google'
 
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-})
+// const montserrat = Montserrat({
+//   subsets: ['latin'],
+//   weight: ['400', '500', '700'],
+// })
 
 const robotoSlab = Roboto_Slab({
   subsets: ['latin'],
@@ -26,7 +25,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${montserrat.className}`}
+      className={`${robotoSlab.className}`}
     >
       <body className="w-full p-8 flex flex-col">{children}</body>
     </html>
