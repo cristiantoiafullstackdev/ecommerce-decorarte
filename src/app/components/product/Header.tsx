@@ -3,7 +3,7 @@ import React from 'react'
 
 export default function Header() {
   return (
-    <section className="fixed w-full h-24 z-50 bg-[var(--color-nogal)]">
+    <section className="fixed w-full h-24 z-50 bg-[var(--color-cedro)]">
       <div className='max-w-6xl mt-6 mx-auto flex items-center justify-between text-white'>
         <Link href="/" className='text-5xl font-bold'>
           DecorArte
