@@ -1,4 +1,4 @@
-import Header from './Header';
+import Header from "./Header";
 
 export const Navbar = async () => {
   // 1. Traemos las categorías vivas desde Neon
