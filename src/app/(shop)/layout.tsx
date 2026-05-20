@@ -1,7 +1,7 @@
 // src/app/(shop)/layout.tsx
-import Footer from "../components/product/Footer";
-import Header from "../components/product/Header";
-import HeroShop from "../components/product/Hero";
+import Footer from "../components/ui/Footer";
+import Header from "../components/ui/header/Header";
+import HeroShop from "../components/ui/Hero";
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
