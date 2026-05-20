@@ -23,7 +23,7 @@ export const TopMenu = async () => {
             <Link
               key={category.id}
               href={`/category/${category.slug}`}
-              className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] hover:text-amber-800 transition-all hover:translate-y-[-1px] p-4"
+              className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] hover:text-amber-800 transition-all hover:-translate-y-px p-4"
             >
               {category.name}
             </Link>

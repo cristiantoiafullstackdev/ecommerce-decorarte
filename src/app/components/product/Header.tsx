@@ -1,20 +1,33 @@
-import Link from 'next/link'
 import React from 'react'
+import DecorarteLogo, { DecorarteIsotype } from '../ui/iconos/DecorArteBrand';
 
 export default function Header() {
-  return (
-    <section className="fixed w-full h-24 z-50 bg-[var(--color-cedro)]">
-      <div className='max-w-6xl mt-6 mx-auto flex items-center justify-between text-white'>
-        <Link href="/" className='text-5xl font-bold'>
-          DecorArte
-        </Link>
-        <nav className='hidden md:flex space-x-8'>
-          <Link href="/" >Inicio</Link>
-          <Link href="/productos">Productos</Link>
-          <Link href="/sobre-nosotros">Sobre Nosotros</Link>
-          <Link href="/contacto">Contacto</Link>
-        </nav>
+return (
+    <nav className="fixed top-0 w-full z-50 bg-[#f5f2eb] border-b border-stone-200">
+      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        
+        {/* SECCIÓN DEL LOGO RESPONSIVO */}
+        <div className="shrink-0">
+          {/* 1. En móviles (xs y sm) se oculta el logo completo y solo se muestra en pantallas medianas o superiores (md+) */}
+          <div className="hidden md:block">
+            <DecorarteLogo height={52} />
+          </div>
+
+          {/* 2. En móviles se muestra el isotipo solo y se oculta automáticamente al llegar a pantallas medianas (md) */}
+          <div className="block md:hidden">
+            <DecorarteIsotype size={46} />
+          </div>
+        </div>
+
+        {/* El resto de tus controles (Enlaces, Carrito, Buscar, etc.) */}
+        <div className="flex items-center space-x-6">
+          {/* Enlaces de navegación o iconos aquí */}
+        </div>
+
       </div>
-    </section>
-  )
+    </nav>
+  );
 }
+
+
+
