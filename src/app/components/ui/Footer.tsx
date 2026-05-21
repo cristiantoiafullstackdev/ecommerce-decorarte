@@ -2,9 +2,9 @@ import React from 'react'
 
 export default function Footer() {
   return (
-    <section className="w-full bg-[var(--color-cedro)] py-8">
+    <section className="w-full bg-[#f5f2eb]/90 py-8">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:justify-between items-center ">
-        <p className="text-gray-400 text-sm italic">
+        <p className="text-sm text-stone-800">
           © {new Date().getFullYear()} DecorArte. Piezas únicas en madera.
         </p>
         <div className="text-sm">

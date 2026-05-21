@@ -28,7 +28,7 @@ export default function Header({ cartCount = 0, wishCount = 0, currentSection = 
       {/* Inyectamos las animaciones CSS globales del ecosistema */}
       <GameStyles />
 
-      <nav className="fixed top-0 w-full z-50 bg-[#f5f2eb]/90 backdrop-blur-md border-b border-stone-200/80 shadow-sm transition-all">
+      <nav className="fixed top-0 w-full bg-[#f5f2eb]/90 backdrop-blur-md border-b border-stone-200/80 shadow-sm transition-all z-100">
         <div className="max-w-7xl mx-auto p-6 h-30 flex items-center justify-between">
           
           {/* 1. SECCIÓN DE LOGO RESPONSIVO */}

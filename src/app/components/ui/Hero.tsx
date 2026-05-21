@@ -7,7 +7,7 @@ export default function HeroShop() {
           src="/imagen-hero.png"
           alt="Taller artesanal cálido y ordenado"
           fill
-          className="w-full h-fullobject-cover opacity-70"
+          className="w-full h-full object-cover opacity-70"
           priority
         />
       <div className="absolute inset-0 bg-black/20 z-50" aria-hidden="true" />
