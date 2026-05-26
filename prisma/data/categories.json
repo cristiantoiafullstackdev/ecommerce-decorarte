@@ -1,4 +1,7 @@
 [
-  { "name": "Muebles de Interior", "slug": "muebles-interior" },
-  { "name": "Decoración rústica", "slug": "decoracion-rustica" }
+  { "name": "Ver Todos", "slug": "todo" },
+  { "name": "Juegos de Mesa", "slug": "juegos" },
+  { "name": "Hierro Forjado", "slug": "hierro" },
+  { "name": "Iluminación", "slug": "iluminacion" },
+  { "name": "Objetos Deco", "slug": "deco" }
 ]

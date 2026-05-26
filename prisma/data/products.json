@@ -1,29 +1,128 @@
 [
   {
-    "title": "Mesa de Comedor Industrial",
-    "slug": "mesa-comedor-industrial-madera",
-    "description": "Mesa robusta de madera maciza de paraíso con base de hierro.",
+    "title": "Ajedrez de Madera Tallada a Mano",
+    "slug": "ajedrez-madera-tallada-mano",
+    "description": "Ajedrez de madera tallada a mano con detalles artesanales.",
     "price": 85000,
     "stock": 5,
-    "categorySlug": "muebles-interior",
+    "categorySlug": "juegos",
+    "images": ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88"]
+  },
+    {
+    "title": "Ajedrez de Hierro",
+    "slug": "ajedrez-hierro",
+    "description": "Ajedrez de hierro forjado con detalles artesanales.",
+    "price": 85000,
+    "stock": 5,
+    "categorySlug": "juegos",
     "images": ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88"]
   },
   {
     "title": "Estante Flotante Rústico",
-    "slug": "estante-flotante-rustico-madera",
+    "slug": "estante-flotante-rustico",
     "description": "Estante de madera recuperada con acabado en barniz mate.",
     "price": 12500,
     "stock": 15,
-    "categorySlug": "decoracion-rustica",
+    "categorySlug": "deco",
     "images": ["https://images.unsplash.com/photo-1594026112284-02bb6f3352fe"]
   },
   {
-    "title": "Silla Minimalista Nórdica",
-    "slug": "silla-minimalista-nordica",
-    "description": "Silla de madera de haya con diseño ergonómico.",
+    "title": "Portaretrato de hierro",
+    "slug": "portaretrato-hierro",
+    "description": "Portaretrato de hierro forjado con diseño rústico.",
+    "price": 15000,
+    "stock": 20,
+    "categorySlug": "deco",
+    "images": ["https://images.unsplash.com/photo-1505691938895-1758d7feb511"]
+  },
+  {
+    "title": "Portaretrato de Madera",
+    "slug": "portaretrato-madera",
+    "description": "Portaretrato de madera con diseño rústico.",
+    "price": 12000,
+    "stock": 25,
+    "categorySlug": "deco",
+    "images": ["https://images.unsplash.com/photo-1505691938895-1758d7feb511"]
+  },
+  {
+    "title": "Lámpara de Mesa de Madera",
+    "slug": "lampara-mesa-madera",
+    "description": "Lámpara de mesa con base de madera.",
+    "price": 30000,
+    "stock": 10,
+    "categorySlug": "iluminacion",
+    "images": ["https://images.unsplash.com/photo-1505691938895-1758d7feb511"]
+  },
+  {
+    "title": "Tatetí 9",
+    "slug": "tateti-9",
+    "description": "Tablero de juego Táctil 9x9 con piezas de madera.",
     "price": 22000,
     "stock": 10,
-    "categorySlug": "muebles-interior",
+    "categorySlug": "juegos",
     "images": ["https://images.unsplash.com/photo-1503602642458-232111445657"]
+  },
+  {
+    "title": "Plafón simple",
+    "slug": "plafon-simple",
+    "description": "Lámpara de techo con estructura de hierro.",
+    "price": 45000,
+    "stock": 8,
+    "categorySlug": "iluminacion",
+    "images": ["https://images.unsplash.com/photo-1505691938895-1758d7feb511"]
+  },
+  {
+    "title": "Juego de Damas en Madera",
+    "slug": "juego-damas-madera",
+    "description": "Juego de damas con tablero y piezas de madera tallada a mano.",
+    "price": 18000,
+    "stock": 12,
+    "categorySlug": "juegos",
+    "images": ["https://images.unsplash.com/photo-1523475496153-3d6ccf1bfbf4"]
+  },
+  {
+    "title": "Lámpara de Hierro",
+    "slug": "lampara-hierro",
+    "description": "Lámpara de mesa con base de hierro forjado y pantalla de tela.",
+    "price": 35000,
+    "stock": 7,
+    "categorySlug": "iluminacion",
+    "images": ["https://images.unsplash.com/photo-1505691938895-1758d7feb511"]
+  },
+  {
+    "title": "Porta Velas de Hierro",
+    "slug": "porta-velas-hierro",
+    "description": "Porta velas de hierro forjado con diseño rústico.",
+    "price": 15000,
+    "stock": 20,
+    "categorySlug": "hierro",
+    "images": ["https://images.unsplash.com/photo-1505691938895-1758d7feb511"]
+  },
+  {
+    "title": "Truquera",
+    "slug": "truquera",
+    "description": "Truquera con diseño rústico y acabado en madera.",
+    "price": 20000,
+    "stock": 15,
+    "categorySlug": "juegos",
+    "images": ["https://images.unsplash.com/photo-1523475496153-3d6ccf1bfbf4"]
+  },
+  {
+    "title": "Lámpara de Pared",
+    "slug": "lampara-pared",
+    "description": "Lámpara de pared con estructura de hierro forjado y pantalla de vidrio.",
+    "price": 40000,
+    "stock": 5,
+    "categorySlug": "iluminacion",
+    "images": ["https://images.unsplash.com/photo-1505691938895-1758d7feb511"]
+  },
+  {
+    "title": "Cuadros Decorativos de Madera",
+    "slug": "cuadros-decorativos-madera",
+    "description": "Cuadros decorativos de madera con diseños únicos.",
+    "price": 12000,
+    "stock": 25,
+    "categorySlug": "juegos",
+    "images": ["https://images.unsplash.com/photo-1523475496153-3d6ccf1bfbf4"]
   }
 ]

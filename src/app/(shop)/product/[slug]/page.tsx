@@ -1,5 +1,5 @@
 import { getProductBySlug } from '@/actions/product-actions';
-import { ProductView } from '@/app/components/product/ProductView';
+import { ProductView } from '@/app/components/shop/ProductView';
 import { notFound } from 'next/navigation';
 
 interface Props {

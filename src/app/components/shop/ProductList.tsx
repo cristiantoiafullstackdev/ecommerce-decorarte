@@ -1,5 +1,5 @@
 import { getPaginatedProducts } from "@/actions/product-actions";
-import { CardProduct } from "@/app/components/product/CardProduct"; 
+import { CardProduct } from "@/app/components/shop/CardProduct"; 
 
 export default async function ProductList() {
   const products = await getPaginatedProducts();

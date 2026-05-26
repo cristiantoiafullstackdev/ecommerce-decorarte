@@ -1,4 +1,4 @@
-import ProductList from "../components/product/ProductList";
+import ProductList from "../components/shop/ProductList";
 
 export default async function Home() {
   return (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Roboto_Slab } from 'next/font/google'
 import { Navbar } from "@/app/components/ui/header/navbar";
+import IconWhatsApp from "@/app/components/ui/iconos/IconWhatsApp";
 
 // const montserrat = Montserrat({
 //   subsets: ['latin'],
@@ -37,6 +38,7 @@ export default function RootLayout({
         <main>
           {children}
         </main>
+        <IconWhatsApp />
       </body>
     </html>
   );
