@@ -8,7 +8,7 @@ import {
   DecorarteBagIcon, 
   DecorarteUserIcon,
   GameStyles
-} from '@/app/components/ui/iconos/DecorArteBrand';
+} from '@/app/components/iconos/DecorArteBrand';
 
 interface HeaderProps {
   cartCount: number;

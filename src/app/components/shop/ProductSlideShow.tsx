@@ -1,21 +1,38 @@
+// src/app/components/shop/ProductSlideShow.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { DecorarteIsotype } from '@/app/components/iconos/DecorArteBrand';
 
-interface Props {
+interface ProductSlideshowProps {
   images: string[];
   title: string;
 }
 
-export const ProductSlideshow = ({ images, title }: Props) => {
-  const [activeImage, setActiveImage] = useState(images[0] || '/placeholder.png');
+export const ProductSlideshow = ({ images, title }: ProductSlideshowProps) => {
+  const [activeImage, setActiveImage] = useState('/placeholder.png');
+  const [imgError, setImgError] = useState(false);
 
-  // Si el producto no tiene imágenes, mostramos un fallback
-  if (!images || images.length === 0) {
+  // Sincroniza la imagen activa inicial si cambia el array de imágenes
+  useEffect(() => {
+    if (images && images.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveImage(images[0]);
+      setImgError(false);
+    }
+  }, [images]);
+
+  // Si no hay imágenes válidas o fallaron, renderizamos un fallback de marca premium
+  if (!images || images.length === 0 || imgError) {
     return (
-      <div className="bg-[#F5F5F5] aspect-square w-full flex items-center justify-center border border-[#EEEBE7]">
-        <p className="text-[#5D4037] italic">Sin imágenes disponibles</p>
+      <div className="relative aspect-square w-full rounded-2xl bg-linear-to-br from-[#EFECE4] to-[#E5E1D5] flex flex-col items-center justify-center p-8 text-center select-none border-2 border-stone-200">
+        <div className="text-[#1C1816]/10">
+          <DecorarteIsotype size={96} />
+        </div>
+        <p className="text-stone-400 text-xs uppercase tracking-[0.2em] font-black mt-4">
+          Visualización en Taller
+        </p>
       </div>
     );
   }
@@ -23,13 +40,15 @@ export const ProductSlideshow = ({ images, title }: Props) => {
   return (
     <div className="flex flex-col gap-4 w-full">
       {/* 1. IMAGEN PRINCIPAL (GRANDE) */}
-      <div className="relative aspect-square w-full overflow-hidden bg-[#F5F5F5] border border-[#EEEBE7] shadow-sm">
+      <div className="relative aspect-square w-full overflow-hidden bg-white rounded-2xl border-2 border-stone-200/80 shadow-sm">
         <Image
           src={activeImage}
           alt={title}
           fill
           priority
+          sizes="(max-w-1024px) 100vw, 60vw"
           className="object-cover transition-all duration-300"
+          onError={() => setImgError(true)}
         />
       </div>
 
@@ -40,10 +59,10 @@ export const ProductSlideshow = ({ images, title }: Props) => {
             <button
               key={index}
               onClick={() => setActiveImage(image)}
-              className={`relative aspect-square overflow-hidden bg-[#F5F5F5] border-2 transition-all ${
+              className={`relative game-bounce aspect-square overflow-hidden rounded-xl bg-white border-2 transition-all focus:outline-none ${
                 activeImage === image 
-                  ? 'border-[#8D6E63] opacity-100 scale-95' 
-                  : 'border-transparent opacity-60 hover:opacity-100'
+                  ? 'border-[#B57C38] opacity-100 scale-95 shadow-inner' 
+                  : 'border-stone-200 opacity-60 hover:opacity-100'
               }`}
               aria-label={`Ver imagen ${index + 1} de ${title}`}
             >
