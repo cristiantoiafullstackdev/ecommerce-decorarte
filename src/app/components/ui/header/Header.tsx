@@ -1,5 +1,7 @@
 // src/app/components/ui/header/Header.tsx
 "use client";
+
+import { useState, useEffect } from 'react';
 import { 
   DecorarteLogo, 
   DecorarteIsotype, 
@@ -9,27 +11,41 @@ import {
   DecorarteUserIcon,
   GameStyles
 } from '@/app/components/iconos/DecorArteBrand';
+import { useCartStore } from '@/store/cart/cart-store';
+import SidebarCart from '@/app/components/cart/SlidebarCart';
 
 interface HeaderProps {
-  cartCount: number;
   wishCount: number;
   currentSection?: string;
 }
 
-export default function Header({ cartCount = 0, wishCount = 0, currentSection = "catalogo" }: HeaderProps) {
+export default function Header({ wishCount = 0, currentSection = "catalogo" }: HeaderProps) {
+  const [isCartOpen, setIsCartOpen] = useState(false);
   
+  // Consumimos el estado de hidratación y la función contadora por separado
+  const hasHydrated = useCartStore((state) => state._hasHydrated);
+  const totalItems = useCartStore((state) => state.getTotalItems());
+
+  // Estado secundario para asegurarnos que Next.js no choque render de servidor con cliente
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsClient(true);
+  }, []);
+
   const handleSearch = () => console.log("Buscar...");
   const handleWishlist = () => console.log("Wishlist...");
-  const handleCart = () => console.log("Carrito...");
   const handleProfile = () => console.log("Perfil...");
+
+  // Si no se ha hidratado Zustand o no estamos en el cliente, mostramos 0 temporalmente de forma pasiva
+  const displayItems = (isClient && hasHydrated) ? totalItems : 0;
 
   return (
     <>
       <GameStyles />
 
-      {/* Cambiado z-100 por z-50 (máximo estándar nativo de Tailwind) */}
-      <nav className="fixed top-0 w-full bg-[#f5f2eb]/90 backdrop-blur-md border-b border-stone-200/80 shadow-sm transition-all z-50">
-        {/* Cambiado h-30 por h-32 (128px exactos) para dar el espacio idéntico a tu captura */}
+      {/* Contenedor Fijo Superior */}
+      <nav className="fixed top-0 w-full bg-[#EAE6DC]/90 backdrop-blur-md border-b border-stone-200/80 shadow-sm transition-all z-50">
         <div className="max-w-7xl mx-auto px-6 h-32 flex items-center justify-between">
           
           {/* 1. SECCIÓN DE LOGO RESPONSIVO */}
@@ -42,7 +58,7 @@ export default function Header({ cartCount = 0, wishCount = 0, currentSection = 
             </div>
           </div>
 
-          {/* 2. ENLACES DE NAVEGACIÓN EN LINEA (Corregidos los textos de validación de sección activa) */}
+          {/* 2. ENLACES DE NAVEGACIÓN EN LINEA */}
           <div className="hidden lg:flex items-center space-x-10">
             <a href="#catalogo" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "catalogo" ? "game-link-active" : ""}`}>
               Catálogo
@@ -55,7 +71,7 @@ export default function Header({ cartCount = 0, wishCount = 0, currentSection = 
             </a>
           </div>
 
-          {/* 3. CONTROLES CON BOTONES COMPACTOS + HOVER ANIMADO */}
+          {/* 3. CONTROLES CON BOTONES COMPACTOS */}
           <div className="flex items-center space-x-6">
             <button onClick={handleSearch} className="focus:outline-none p-1 game-bounce" aria-label="Buscar">
               <DecorarteSearchIcon size={36} />
@@ -70,11 +86,16 @@ export default function Header({ cartCount = 0, wishCount = 0, currentSection = 
               )}
             </button>
 
-            <button onClick={handleCart} className="focus:outline-none p-1 relative game-bounce" aria-label="Carrito">
+            {/* BOTÓN DEL CARRITO CONECTADO DIRECTAMENTE A LA STORE OPTIMIZADA */}
+            <button 
+              onClick={() => setIsCartOpen(true)} 
+              className="focus:outline-none p-1 relative game-bounce" 
+              aria-label="Carrito"
+            >
               <DecorarteBagIcon size={44} />
-              {cartCount > 0 && (
+              {displayItems > 0 && (
                 <span className="absolute -top-1 -right-1.5 bg-[#C84B31] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-stone-900 shadow">
-                  {cartCount}
+                  {displayItems}
                 </span>
               )}
             </button>
@@ -86,6 +107,9 @@ export default function Header({ cartCount = 0, wishCount = 0, currentSection = 
 
         </div>
       </nav>
+
+      {/* COMPONENTE SIDEBAR INYECTADO */}
+      <SidebarCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
 }

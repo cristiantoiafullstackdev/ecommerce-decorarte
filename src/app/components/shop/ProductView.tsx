@@ -4,6 +4,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Product, Category } from '@prisma/client';
+import { useCartStore } from '@/store/cart/cart-store'; // 1. Importamos la store
 import { ProductSlideshow } from './ProductSlideShow';
 import { DecorarteIsotype } from '@/app/components/iconos/DecorArteBrand';
 
@@ -12,6 +13,8 @@ interface ProductViewProps {
 }
 
 export const ProductView = ({ product }: ProductViewProps) => {
+
+  const addProductToCart = useCartStore((state) => state.addProductToCart); // 2. Traemos la acción
   const router = useRouter();
   
   const formatPrice = (value: number) => {
@@ -23,7 +26,7 @@ export const ProductView = ({ product }: ProductViewProps) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 mt-4 mb-20 bg-[#f5f2eb]/90 backdrop-blur-md border-b border-stone-200/80 shadow-sm rounded-xl">
+    <div className="max-w-7xl mx-auto px-4 mt-4 mb-20 bg-(--bgWoodLight) backdrop-blur-md border-b border-stone-200/80 shadow-sm rounded-xl">
       
       {/* 1. NAVEGACIÓN DE RETORNO Y BREADCRUMBS */}
       <div className="mt-48 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-stone-200">
@@ -102,6 +105,7 @@ export const ProductView = ({ product }: ProductViewProps) => {
           {/* Botón de Añadir al carrito */}
           <button 
             disabled={product.stock === 0}
+            onClick={() => addProductToCart(product, 1)} // 3. Cableamos el clic aquí
             className={`w-full game-bounce py-4 rounded-xl font-bold uppercase text-xs tracking-[0.2em] transition-all duration-150 border-2 mt-6 focus:outline-none flex items-center justify-center gap-2
               ${product.stock > 0
                 ? 'bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white border-[#1C1816] shadow-[0_4px_0px_#B57C38] active:translate-y-1 active:shadow-none'

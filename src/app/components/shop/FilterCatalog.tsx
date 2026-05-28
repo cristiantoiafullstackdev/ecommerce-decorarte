@@ -20,7 +20,7 @@ export default function FilterCatalog({
   const dynamicCategories = categories.filter(cat => cat.slug !== 'todo');
 
   return (
-    <section id="catalog" className="w-full bg-[#F5F2EB] py-12 px-6 md:px-16 lg:px-24 border-b border-stone-200">
+    <section id="catalog" className="w-full bg-[#E2DCD0] py-12 px-6 md:px-16 lg:px-24 border-b border-stone-200">
       <div className="max-w-7xl mx-auto">
         
         {/* Section Header */}
@@ -32,7 +32,7 @@ export default function FilterCatalog({
         </div>
 
         {/* Filters Container with horizontal mobile scrolling */}
-        <div className="flex items-center justify-start md:justify-center overflow-x-auto pb-4 md:pb-0 scrollbar-none space-x-4 md:space-x-6">
+        <div className="flex items-center justify-start md:justify-center overflow-x-auto p-4 scrollbar-none space-x-4 md:space-x-6">
           
           {/* Master Button for 'Ver Todo' */}
           <button

@@ -40,7 +40,7 @@ export const ProductSlideshow = ({ images, title }: ProductSlideshowProps) => {
   return (
     <div className="flex flex-col gap-4 w-full">
       {/* 1. IMAGEN PRINCIPAL (GRANDE) */}
-      <div className="relative aspect-square w-full overflow-hidden bg-white rounded-2xl border-2 border-stone-200/80 shadow-sm">
+      <div className="relative aspect-square w-full overflow-hidden bg-(--bgWoodLight) rounded-2xl border-2 border-stone-200/80 shadow-sm">
         <Image
           src={activeImage}
           alt={title}

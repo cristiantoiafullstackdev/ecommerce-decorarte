@@ -1,23 +1,22 @@
+// src/app/components/ui/header/Navbar.tsx
 import Header from "./Header";
 
 export const Navbar = async () => {
-  // 1. Traemos las categorías vivas desde Neon
+  // 1. Traemos las categorías vivas desde Neon (Listo para la conexión futura)
 
-  // 2. Valores provisorios de estados (Se conectarán a Zustand en Fase 2)
-  const cartCount = 0; 
+  // 2. Valores provisorios (Cambiarán en la Fase de Zustand)
   const wishCount = 0;
 
   return (
     <>
       {/* Acoplamos el Header limpio enviándole los datos requeridos */}
       <Header 
-        cartCount={cartCount}
         wishCount={wishCount}
         currentSection="catalogo"
       />
       
-      {/* Colchón o separador para que el contenido no se desplace bajo la barra fija */}
-      <div className="h-20 w-full bg-[#f5f2eb]" />
+      {/* Corregido a h-32 para que el contenido empiece exactamente donde termina el Header fixed */}
+      <div className="h-32 w-full bg-[#f5f2eb]" />
     </>
   );
 };

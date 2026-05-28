@@ -11,7 +11,7 @@ export default async function ShopPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-[#3A2212]">
+    <main className="min-h-screen bg-[#52301A]/40">
       <HeroShop />
       
       {/* Inyectamos los datos limpios de la DB al orquestador cliente */}

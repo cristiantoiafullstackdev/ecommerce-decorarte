@@ -60,7 +60,7 @@ export default function CardProduct({ product }: CardProductProps) {
       </div>
 
       {/* Datos del Producto */}
-      <div className="p-5 flex flex-col grow justify-between bg-white">
+      <div className="p-5 flex flex-col grow justify-between bg-[#E2DCD0]">
         <div>
           <h3 className="font-bold text-stone-900 text-base md:text-lg tracking-tight leading-snug group-hover:text-[#B57C38] transition-colors duration-200">
             {product.title}

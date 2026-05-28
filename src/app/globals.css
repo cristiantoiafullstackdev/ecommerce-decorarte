@@ -1,10 +1,18 @@
 @import "tailwindcss";
 /* 🎨 Variables globales de color */
 :root {
-  --color-nogal: #4E3B31;      /* Principal */
-  --color-cedro: #4D1919;      /* Secundario */
-  --color-roble: #D2691E;      /* Texto */
-  --color-algarrobo: #7B463B;  /* Bordes y sombras */
+  --bgWoodDark: "#3A2212",
+  --bgWoodMedium: "#5C3A21",
+  --bgWoodLight: "#7A4F31",
+  --ironDark: "#1E1A17",
+  --ironMedium: "#3E3A37",
+  --ironLight: "#6E6864",
+  --woodDark: "#52301A",
+  --woodMedium: "#915B33",
+  --woodLight: "#E0A363",
+  --accentGold: "#D69624",
+  --accentGoldLight: "#FFE699"
+  
 }
 
 /* Reset básico */
