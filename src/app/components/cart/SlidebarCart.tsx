@@ -1,4 +1,3 @@
-// src/app/components/cart/SidebarCart.tsx
 "use client";
 
 import React, { useEffect, useState } from 'react';

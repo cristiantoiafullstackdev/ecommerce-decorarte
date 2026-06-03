@@ -1,0 +1,97 @@
+'use server';
+
+import prisma from "@/lib/prisma";
+
+interface OrderItemInput {
+  productId: string;
+  quantity: number;
+  price: number;
+}
+
+interface OrderInput {
+  userId: string; // <--  obligatorio, no acepta null ni undefined
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  province: string;
+  zipCode: string;
+  notes?: string;
+  items: OrderItemInput[];
+}
+
+export const createOrder = async (orderData: OrderInput) => {
+  try {
+    const { items, userId, ...shippingData } = orderData;
+    // 1. Validar productos y calcular precios reales desde el servidor
+    let subTotal = 0;    
+    const dbProducts = await prisma.product.findMany({
+      where: { id: { in: items.map(i => i.productId) } }
+    });
+    for (const item of items) {
+      const dbProduct = dbProducts.find(p => p.id === item.productId);
+      if (!dbProduct) {
+        throw new Error(`La pieza artesanal con ID ${item.productId} ya no está disponible.`);
+      }      
+      if (dbProduct.stock < item.quantity) {
+        throw new Error(`Stock insuficiente en taller para: "${dbProduct.title}". Disponibles: ${dbProduct.stock}`);
+      }
+      subTotal += dbProduct.price * item.quantity;
+    }
+
+    const shipping = shippingData.province === 'cordoba' ? 4500 : 8500;
+    const total = subTotal + shipping;
+
+    // 2. Transacción Atómica en Neon
+    const order = await prisma.$transaction(async (tx) => {
+      
+      const newOrder = await tx.order.create({
+        data: {
+          userId: userId,
+          subTotal,
+          shipping,
+          total,
+          status: 'PENDING', 
+          ...shippingData,
+          items: {
+            create: items.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              price: dbProducts.find(p => p.id === item.productId)!.price
+            }))
+          }
+        }
+      });
+
+      // Descontar stock real
+      for (const item of items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: {
+              decrement: item.quantity
+            }
+          }
+        });
+      }
+
+      return newOrder;
+    });
+
+    return {
+      ok: true,
+      orderId: order.id,
+      message: "Orden de compra congelada en base de datos de forma exitosa."
+    };
+
+  } catch (error) {
+    console.error("❌ Error crítico en createOrder Action:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false,
+      message: message || "Ocurrió un error interno en el servidor."
+    };
+  }
+};

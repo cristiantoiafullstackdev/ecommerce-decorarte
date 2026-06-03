@@ -3,8 +3,6 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import bcrypt from 'bcryptjs';
 import "dotenv/config";
-
-// Importación de datos JSON
 import categories from "./data/categories.json";
 import users from "./data/users.json";
 import products from "./data/products.json";
@@ -20,7 +18,6 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🚀 Iniciando Seeding para DecorArte...");
-
   // 3. Limpieza de tablas (En orden de relaciones)
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
@@ -28,7 +25,6 @@ async function main() {
   await prisma.category.deleteMany();
   await prisma.user.deleteMany();
   console.log("Tablas limpias.");
-
 // 4. Cargar Usuarios
   const hashedPassword = await bcrypt.hash('admin123', 10);
   for (const user of users) {
@@ -41,7 +37,6 @@ async function main() {
     });
   }
   console.log("👤 Usuario Admin creado.");
-
   // 5. Crear Categorías
 for (const cat of categories) {
     await prisma.category.create({
@@ -49,14 +44,12 @@ for (const cat of categories) {
     });
   }
   console.log("📁 Categorías creadas.");
-
   // 6. Cargar Productos
   // Buscamos el ID de la categoría por su slug para vincularlos correctamente
   for (const prod of products) {
     const category = await prisma.category.findUnique({
       where: { slug: prod.categorySlug }
     });
-
     if (category) {
       await prisma.product.create({
         data: {
@@ -73,7 +66,6 @@ for (const cat of categories) {
   }
   console.log('✅ Seeding finalizado con éxito. 🌱 ¡DecorArte está listo para brillar! ');
 }
-
 main()
   .catch((e) => {
     console.error("❌ Error en el seed:", e);

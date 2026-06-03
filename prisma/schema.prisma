@@ -51,16 +51,28 @@ model Category {
 model Order {
   id          String      @id @default(cuid())
   user        User        @relation(fields: [userId], references: [id])
-  userId      String
-  items       OrderItem[]
+  userId      String  
+  items       OrderItem[]  
+  subTotal    Float       @default(0)
+  shipping    Float       @default(0)
   total       Float
+  
   status      OrderStatus @default(PENDING)
-  address     String?
-  paymentId   String?     // ID de transacción de Mercado Pago
+  paymentId   String?     
+  
+  firstName   String
+  lastName    String
+  email       String
+  phone       String
+  address     String      
+  city        String      
+  province    String      
+  zipCode     String      
+  notes       String?     
+  
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
-
 model OrderItem {
   id        String  @id @default(cuid())
   order     Order   @relation(fields: [orderId], references: [id])
