@@ -9,7 +9,7 @@ interface OrderItemInput {
 }
 
 interface OrderInput {
-  userId: string; // <--  obligatorio, no acepta null ni undefined
+  userId: string; // Obligatorio, no acepta null ni undefined
   firstName: string;
   lastName: string;
   email: string;
@@ -25,11 +25,13 @@ interface OrderInput {
 export const createOrder = async (orderData: OrderInput) => {
   try {
     const { items, userId, ...shippingData } = orderData;
+    
     // 1. Validar productos y calcular precios reales desde el servidor
     let subTotal = 0;    
     const dbProducts = await prisma.product.findMany({
       where: { id: { in: items.map(i => i.productId) } }
     });
+
     for (const item of items) {
       const dbProduct = dbProducts.find(p => p.id === item.productId);
       if (!dbProduct) {
@@ -50,11 +52,22 @@ export const createOrder = async (orderData: OrderInput) => {
       const newOrder = await tx.order.create({
         data: {
           userId: userId,
-          subTotal,
-          shipping,
-          total,
+          subTotal: subTotal,
+          shipping: shipping,
+          total: total,
           status: 'PENDING', 
-          ...shippingData,
+          
+          // Mapeamos los datos de envío de forma explícita para blindar TypeScript
+          firstName: shippingData.firstName,
+          lastName: shippingData.lastName,
+          email: shippingData.email,
+          phone: shippingData.phone,
+          address: shippingData.address,
+          city: shippingData.city,
+          province: shippingData.province,
+          zipCode: shippingData.zipCode,
+          notes: shippingData.notes,
+
           items: {
             create: items.map(item => ({
               productId: item.productId,
@@ -65,7 +78,7 @@ export const createOrder = async (orderData: OrderInput) => {
         }
       });
 
-      // Descontar stock real
+      // 3. Descontar stock real en el taller
       for (const item of items) {
         await tx.product.update({
           where: { id: item.productId },
