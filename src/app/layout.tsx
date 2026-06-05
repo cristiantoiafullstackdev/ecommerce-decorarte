@@ -4,7 +4,7 @@ import "./globals.css";
 import { Roboto_Slab } from 'next/font/google';
 import IconWhatsApp from "@/app/components/iconos/IconWhatsApp";
 import AuthProvider from "@/providers/AuthProvider"; // <-- Importamos nuestro puente de sesión
-import { Navbar } from "./components/ui/header/Navbar";
+import { Navbar } from "@/app/components/ui/header/Navbar";
 
 const robotoSlab = Roboto_Slab({
   subsets: ['latin'],
