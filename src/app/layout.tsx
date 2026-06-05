@@ -1,23 +1,19 @@
+// src/app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
-import { Roboto_Slab } from 'next/font/google'
-import { Navbar } from "@/app/components/ui/header/navbar";
+import { Roboto_Slab } from 'next/font/google';
 import IconWhatsApp from "@/app/components/iconos/IconWhatsApp";
-
-// const montserrat = Montserrat({
-//   subsets: ['latin'],
-//   weight: ['400', '500', '700'],
-// })
+import AuthProvider from "@/providers/AuthProvider"; // <-- Importamos nuestro puente de sesión
+import { Navbar } from "./components/ui/header/Navbar";
 
 const robotoSlab = Roboto_Slab({
   subsets: ['latin'],
   weight: ['400', '700'],
-})
+});
 
 export const metadata: Metadata = {
   title: "Artesanías DecorArte | Taller de Muebles de Autor",
   description: "Muebles de madera y hierro con alma artesanal, creados en Córdoba.",
-  // El isotipo como favicon de la pestaña del navegador
   icons: {
     icon: "/favicon.svg?v=3",
   }
@@ -29,18 +25,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${robotoSlab.className}`}
-    >
+    <html lang="en" className={`${robotoSlab.className}`}>
       <body className="w-full p-8 flex flex-col">
-        <Navbar />
-        <main>
-          {children}
-        </main>
-        <IconWhatsApp />
+        {/* Envolvemos la app con AuthProvider para habilitar el uso de sesiones */}
+        <AuthProvider>
+          <Navbar />
+          <main>
+            {children}
+          </main>
+          <IconWhatsApp />
+        </AuthProvider>
       </body>
     </html>
   );
 }
-export { robotoSlab }
+
+export { robotoSlab };
