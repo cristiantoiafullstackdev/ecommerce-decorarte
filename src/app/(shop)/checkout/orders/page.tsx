@@ -1,11 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { GameStyles } from '@/app/components/iconos/DecorArteBrand';
 
-export default function OrderSuccessPage() {
+// 1. Separamos el contenido que consume useSearchParams en un componente interno
+function OrderSuccessContent() {
   const searchParams = useSearchParams();
   
   // Recuperamos el ID de la orden real devuelto por tu Backend Neon
@@ -89,5 +90,18 @@ export default function OrderSuccessPage() {
 
       </div>
     </main>
+  );
+}
+
+// 2. Exportamos por defecto el componente principal envuelto en un Suspense Boundary
+export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F5F2EB] flex flex-col items-center justify-center text-center">
+        <span className="text-xs font-black uppercase text-stone-500 tracking-widest">Cargando orden del taller...</span>
+      </div>
+    }>
+      <OrderSuccessContent />
+    </Suspense>
   );
 }
