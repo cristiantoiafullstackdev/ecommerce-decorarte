@@ -13,6 +13,12 @@ enum Role {
   ADMIN
 }
 
+// 1. NUEVO ENUM PARA CONTROLAR LA LÓGICA DE PAGO
+// (Obligatorio para el flujo de DecorArte)
+enum PaymentMethod {
+  MERCADOPAGO
+  TRANSFERENCIA
+}
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -49,29 +55,35 @@ model Category {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  user        User        @relation(fields: [userId], references: [id])
-  userId      String  
-  items       OrderItem[]  
-  subTotal    Float       @default(0)
-  shipping    Float       @default(0)
-  total       Float
+  id            String        @id @default(cuid())
+  user          User          @relation(fields: [userId], references: [id])
+  userId        String  
+  items         OrderItem[]  
   
-  status      OrderStatus @default(PENDING)
-  paymentId   String?     
+  // Valores Económicos Históricos
+  subTotal      Float         @default(0)
+  shipping      Float         @default(0)
+  discount      Float         @default(0) // 2. AGREGADO: Necesario para registrar el 10% OFF de transferencia
+  total         Float
   
-  firstName   String
-  lastName    String
-  email       String
-  phone       String
-  address     String      
-  city        String      
-  province    String      
-  zipCode     String      
-  notes       String?     
+  // Estado y Pasarela
+  status        OrderStatus   @default(PENDING)
+  paymentMethod PaymentMethod // 3. AGREGADO: Obligatorio para decidir si mostramos CBU o el Brick de MP
+  paymentId     String?       // ID de operación que devuelve Mercado Pago (si aplica)
   
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  // Datos de Despacho Inmutables
+  firstName     String
+  lastName      String
+  email         String
+  phone         String
+  address       String      
+  city          String      
+  province      String      
+  zipCode       String      
+  notes         String?     
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 model OrderItem {
   id        String  @id @default(cuid())

@@ -1,7 +1,9 @@
+// src/app/components/cart/SlidebarCart.tsx
 "use client";
 
-import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation'; // <-- Importamos el enrutador de Next
+import { useSession } from 'next-auth/react'; // <-- Importamos las sesiones de NextAuth
 import { DecorarteIsotype } from '@/app/components/iconos/DecorArteBrand';
 import { useCartStore } from '@/store/cart/cart-store';
 
@@ -11,6 +13,9 @@ interface SidebarCartProps {
 }
 
 export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
+  const router = useRouter(); // Instanciamos el router para navegar
+  const { status } = useSession(); // Evaluamos si está autenticado en el Front
+  
   // 1. Conectamos las acciones y estados del motor de Zustand
   const cart = useCartStore((state) => state.cart);
   const updateQuantity = useCartStore((state) => state.updateProductQuantity);
@@ -19,16 +24,24 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
   const totalItems = useCartStore((state) => state.getTotalItems());
   const subTotal = useCartStore((state) => state.getSubTotal());
 
-  // 2. Control de renderizado del lado del cliente para evitar desajustes visuales iniciales
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsClient(true);
-  }, []);
+  // 2. Control de renderizado basado en hidratación de Zustand
+  const activeCart = hasHydrated ? cart : [];
+  const activeTotalItems = hasHydrated ? totalItems : 0;
+  const activeSubTotal = hasHydrated ? subTotal : 0;
 
-  const activeCart = (isClient && hasHydrated) ? cart : [];
-  const activeTotalItems = (isClient && hasHydrated) ? totalItems : 0;
-  const activeSubTotal = (isClient && hasHydrated) ? subTotal : 0;
+  // Lógica del botón de Checkout
+  const handleCheckoutClick = () => {
+    // Cerramos el panel lateral para una transición limpia
+    onClose();
+
+    if (status === "authenticated") {
+      // Caso Logueado: Va directo a cargar sus datos de envío
+      router.push('/checkout');
+    } else {
+      // Caso Visitante: Lo mandamos al login, pero guardamos en la URL que quiere ir a /checkout
+      router.push('/auth/login?callbackUrl=/checkout');
+    }
+  };
 
   return (
     <div 
@@ -79,7 +92,7 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
           {/* CUERPO DEL CARRITO */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-none">
             
-            {/* ESTADO VACÍO: Si no hay productos agregados */}
+            {/* ESTADO VACÍO */}
             {activeCart.length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-center pb-12">
                 <div className="text-stone-400 mb-4 animate-pulse">
@@ -111,6 +124,7 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
                       src={item.image} 
                       alt={item.title} 
                       fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -132,7 +146,6 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
                   </div>
 
                   <div className="flex items-center justify-between mt-2">
-                    {/* Selector de Cantidad Dinámico */}
                     <div className="flex items-center border-2 border-stone-200 rounded-lg overflow-hidden bg-[#F5F2EB]">
                       <button 
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -145,16 +158,15 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
                       </span>
                       <button 
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        disabled={item.quantity >= item.stock} // Escudo protector de Stock taller
+                        disabled={item.quantity >= item.stock}
                         className="px-2 py-1 text-stone-500 hover:bg-stone-200 disabled:opacity-30 disabled:hover:bg-transparent font-bold transition-colors text-xs"
                       >
                         +
                       </button>
                     </div>
                     
-                    {/* Precio totalizado por ítem */}
                     <span className="text-sm font-black text-[#1C1816]">
-                      ${(item.price * item.quantity).toLocaleString('es-AR')}
+                      ${item.price.toLocaleString('es-AR')}
                     </span>
                   </div>
                 </div>
@@ -196,8 +208,11 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
                 </div>
               </div>
 
-              {/* Botón de Checkout */}
-              <button className="w-full game-bounce bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white py-4 rounded-xl font-bold uppercase text-xs tracking-[0.2em] transition-all duration-150 border-2 border-[#1C1816] shadow-[0_4px_0px_#B57C38] active:translate-y-1 active:shadow-none focus:outline-none flex items-center justify-center gap-2">
+              {/* Botón de Checkout Conectado a handleCheckoutClick */}
+              <button 
+                onClick={handleCheckoutClick}
+                className="w-full game-bounce bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white py-4 rounded-xl font-bold uppercase text-xs tracking-[0.2em] transition-all duration-150 border-2 border-[#1C1816] shadow-[0_4px_0px_#B57C38] active:translate-y-1 active:shadow-none focus:outline-none flex items-center justify-center gap-2"
+              >
                 Iniciar Orden de Compra
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />

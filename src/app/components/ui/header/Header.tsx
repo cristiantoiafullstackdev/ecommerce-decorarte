@@ -14,7 +14,7 @@ import {
   GameStyles
 } from '@/app/components/iconos/DecorArteBrand';
 import { useCartStore } from '@/store/cart/cart-store';
-import SidebarCart from '@/app/components/cart/SlidebarCart';
+import SidebarCart from '@/app/components/cart/SidebarCart';
 
 interface HeaderProps {
   wishCount: number;

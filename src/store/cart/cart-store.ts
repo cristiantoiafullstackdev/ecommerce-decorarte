@@ -1,4 +1,4 @@
-// src/store/cart/cart-store.ts
+// src/app/store/cart/cart-store.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product, Category } from '@prisma/client';
@@ -14,13 +14,23 @@ export interface CartItem {
   categoryName: string;
 }
 
+// Nueva interfaz para tipar la dirección en el Front
+export interface ShippingAddress {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  province: string;
+  zipCode: string;
+  notes?: string;
+}
+
 interface CartState {
-  getSummary: () => {
-    totalItems: number;
-    subTotal: number;
-  };
   cart: CartItem[];
-  _hasHydrated: boolean; // Control interno de hidratación nativa
+  address: ShippingAddress | null; // <-- Estado de la dirección
+  _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
   
   addProductToCart: (product: Product & { category: Category }, quantity?: number) => void;
@@ -28,16 +38,22 @@ interface CartState {
   removeProductFromCart: (productId: string) => void;
   clearCart: () => void;
   
-  // SELECTORES SEPARADOS (Devuelven números primitivos, evitando bucles infinitos)
+  setShippingAddress: (address: ShippingAddress) => void; // <-- Acción para guardar la dirección
+  
   getTotalItems: () => number;
   getSubTotal: () => number;
+  getSummary: () => {
+    totalItems: number;
+    subTotal: number;
+  };
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       cart: [],
-      _hasHydrated: false, // Inicia en falso
+      address: null, // <-- Inicializa vacía
+      _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       addProductToCart: (product, quantity = 1) => {
@@ -89,7 +105,10 @@ export const useCartStore = create<CartState>()(
 
       clearCart: () => set({ cart: [] }),
 
-      // Métodos de cálculo limpios
+      // Guarda la dirección capturada en el formulario
+      setShippingAddress: (address) => set({ address }),
+
+      // Métodos de cálculo
       getTotalItems: () => get().cart.reduce((total, item) => total + item.quantity, 0),
       getSubTotal: () => get().cart.reduce((sub, item) => sub + item.price * item.quantity, 0),
       getSummary: () => ({
@@ -99,7 +118,6 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'decorarte-shopping-cart',
-      // Esto le avisa a Zustand que ejecute la función cuando termine de leer el localStorage
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },

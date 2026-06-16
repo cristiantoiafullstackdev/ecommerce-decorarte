@@ -1,29 +1,34 @@
 "use client";
 
-import React, { useState } from 'react'; // Retiramos 'useEffect' de los imports
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart/cart-store';
 import { DecorarteIsotype, GameStyles } from '@/app/components/iconos/DecorArteBrand';
 
 export default function CheckoutPage() {
+  const router = useRouter();
+  
   const cart = useCartStore((state) => state.cart);
   const hasHydrated = useCartStore((state) => state._hasHydrated);
   const totalItems = useCartStore((state) => state.getTotalItems());
   const subTotal = useCartStore((state) => state.getSubTotal());
-  // Estado para capturar los datos del formulario de envío
+  const setAddress = useCartStore((state) => state.setShippingAddress); 
+  const savedAddress = useCartStore((state) => state.address); 
+
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    address: '',
-    city: '',
-    province: 'cordoba',
-    zipCode: '',
-    notes: ''
+    firstName: savedAddress?.firstName || '',
+    lastName: savedAddress?.lastName || '',
+    phone: savedAddress?.phone || '',
+    email: savedAddress?.email || '',
+    address: savedAddress?.address || '',
+    city: savedAddress?.city || '',
+    province: savedAddress?.province || 'cordoba',
+    zipCode: savedAddress?.zipCode || '',
+    notes: savedAddress?.notes || ''
   });
-  // 2. Evaluamos los datos usando directamente la bandera de Zustand
+
   const activeCart = hasHydrated ? cart : [];
   const activeTotalItems = hasHydrated ? totalItems : 0;
   const activeSubTotal = hasHydrated ? subTotal : 0;
@@ -41,11 +46,23 @@ export default function CheckoutPage() {
 
   const handleSubmitOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Datos de Envío cargados:", formData);
-    console.log("Artículos de la Orden:", activeCart);
-    alert("¡Orden capturada! Próximo paso: Procesamiento del Pago.");
+    
+    setAddress({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      city: formData.city,
+      province: formData.province,
+      zipCode: formData.zipCode,
+      notes: formData.notes || undefined
+    });
+
+    console.log("✅ Datos guardados con éxito en Zustand:", formData);
+    router.push('/checkout/review');
   };
-  // 3. Control de renderizado seguro contra errores de hidratación
+
   if (hasHydrated && activeCart.length === 0) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-6 pt-32 bg-[#F5F2EB]">
@@ -72,7 +89,7 @@ export default function CheckoutPage() {
       
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12">
         
-        {/* COLUMNA IZQUIERDA: FORMULARIO DE ENVÍO (7 Columnas) */}
+        {/* COLUMNA IZQUIERDA: FORMULARIO DE ENVÍO */}
         <div className="lg:col-span-7 bg-white p-6 md:p-10 rounded-2xl border-2 border-stone-200 shadow-sm space-y-8">
           <div>
             <span className="text-[10px] text-[#B57C38] uppercase tracking-widest font-black bg-[#E2DCD0] px-2.5 py-1 rounded-md">
@@ -138,12 +155,11 @@ export default function CheckoutPage() {
               <textarea name="notes" rows={3} value={formData.notes} onChange={handleInputChange} placeholder="Ej: Horarios de entrega, especificaciones del color del hierro, etc." className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-sm text-stone-800 font-medium focus:outline-none transition-colors resize-none" />
             </div>
 
-            {/* Botón Oculto pero disparador nativo por accesibilidad */}
             <button id="submit-checkout-form" type="submit" className="hidden" aria-label="Enviar formulario de checkout"/>
           </form>
         </div>
 
-        {/* COLUMNA DERECHA: RESUMEN DE COMPRA INMUTABLE (5 Columnas) */}
+        {/* COLUMNA DERECHA: RESUMEN DE COMPRA */}
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-[#E2DCD0] p-6 rounded-2xl border-2 border-stone-300 flex flex-col justify-between shadow-xs">
             <div>
@@ -151,7 +167,6 @@ export default function CheckoutPage() {
                 Resumen de la Orden
               </h2>
               
-              {/* Mini-lista scrollable de ítems comprados */}
               <div className="divide-y divide-stone-300 max-h-60 overflow-y-auto pr-2 scrollbar-none my-4">
                 {activeCart.map((item) => (
                   <div key={item.id} className="py-3 flex items-center justify-between gap-4">
@@ -176,7 +191,6 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Desglose de Precios */}
             <div className="border-t-2 border-stone-300 pt-4 space-y-2.5 text-xs font-semibold text-stone-600">
               <div className="flex justify-between">
                 <span>Subtotal ({activeTotalItems} piezas)</span>
@@ -195,14 +209,13 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Botón de Confirmación Principal */}
           <button 
             onClick={() => document.getElementById('submit-checkout-form')?.click()}
             className="w-full game-bounce bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white py-4 rounded-xl font-bold uppercase text-xs tracking-[0.2em] transition-all duration-150 border-2 border-[#1C1816] shadow-[0_4px_0px_#B57C38] active:translate-y-1 active:shadow-none focus:outline-none flex items-center justify-center gap-2"
           >
             Continuar al Pago
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75 Governors A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
             </svg>
           </button>
 

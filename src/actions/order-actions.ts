@@ -1,6 +1,7 @@
 'use server';
 
 import prisma from "@/lib/prisma";
+import { PaymentMethod } from "@prisma/client";
 
 interface OrderItemInput {
   productId: string;
@@ -9,7 +10,7 @@ interface OrderItemInput {
 }
 
 interface OrderInput {
-  userId: string; // Obligatorio, no acepta null ni undefined
+  userId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -19,12 +20,13 @@ interface OrderInput {
   province: string;
   zipCode: string;
   notes?: string;
+  paymentMethod: 'mercadopago' | 'transferencia'; // 1. AGREGADO EN INPUT
   items: OrderItemInput[];
 }
 
 export const createOrder = async (orderData: OrderInput) => {
   try {
-    const { items, userId, ...shippingData } = orderData;
+    const { items, userId, paymentMethod, ...shippingData } = orderData;
     
     // 1. Validar productos y calcular precios reales desde el servidor
     let subTotal = 0;    
@@ -44,9 +46,12 @@ export const createOrder = async (orderData: OrderInput) => {
     }
 
     const shipping = shippingData.province === 'cordoba' ? 4500 : 8500;
-    const total = subTotal + shipping;
+    
+    // 2. CALCULAR DESCUENTO SEGÚN MÉTODO DE PAGO
+    const discount = paymentMethod === 'transferencia' ? Math.round(subTotal * 0.10) : 0;
+    const total = subTotal + shipping - discount;
 
-    // 2. Transacción Atómica en Neon
+    // 3. Transacción Atómica en Neon
     const order = await prisma.$transaction(async (tx) => {
       
       const newOrder = await tx.order.create({
@@ -54,10 +59,13 @@ export const createOrder = async (orderData: OrderInput) => {
           userId: userId,
           subTotal: subTotal,
           shipping: shipping,
+          discount: discount, // Enviamos el descuento a la base de datos
           total: total,
           status: 'PENDING', 
           
-          // Mapeamos los datos de envío de forma explícita para blindar TypeScript
+          // Mapeamos el Enum correspondiente para la BD
+          paymentMethod: paymentMethod === 'transferencia' ? PaymentMethod.TRANSFERENCIA : PaymentMethod.MERCADOPAGO,
+          
           firstName: shippingData.firstName,
           lastName: shippingData.lastName,
           email: shippingData.email,
@@ -78,7 +86,7 @@ export const createOrder = async (orderData: OrderInput) => {
         }
       });
 
-      // 3. Descontar stock real en el taller
+      // 4. Descontar stock real en el taller
       for (const item of items) {
         await tx.product.update({
           where: { id: item.productId },
