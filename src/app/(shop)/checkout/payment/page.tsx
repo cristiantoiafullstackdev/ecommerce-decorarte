@@ -4,25 +4,34 @@ import prisma from "@/lib/prisma";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { DecorarteIsotype } from "@/app/components/iconos/DecorArteBrand";
 
-// 1. Inicializamos el SDK oficial de Mercado Pago con tu Token seguro del .env
-const mpClient = new MercadoPagoConfig({
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
-});
+// 🚀 Fuerza a Next.js a leer el .env en tiempo de ejecución (crucial para producción y dev)
+export const dynamic = 'force-dynamic';
 
 interface Props {
   searchParams: Promise<{ orderId?: string }>;
 }
 
+// 🌐 Función utilitaria para garantizar URLs absolutas perfectas sin dobles barras "https://dominio.com//ruta"
+function buildAbsoluteUrl(path: string): string {
+  const envUrl = process.env.NEXTAUTH_URL;
+  // Si no está definida, está vacía o solo contiene espacios, usamos localhost de fallback seguro
+  const baseUrl = (envUrl && envUrl.trim() !== "") ? envUrl.trim() : "http://localhost:3000";
+  
+  // Saneamos barras dobles para que Mercado Pago no rechace la URL
+  const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  
+  return `${cleanBase}${cleanPath}`;
+}
+
 export default async function PaymentPage({ searchParams }: Props) {
-  console.log("🚀 ¡LLEGAMOS A LA PÁGINA DE PAGO! searchParams:", await searchParams);
-  // En Next.js 15+ los searchParams se manejan de forma asíncrona
   const { orderId } = await searchParams;
 
   if (!orderId) {
-    notFound(); // Si entran sin ID, Next.js tira un 404 limpio
+    notFound(); 
   }
 
-  // 2. Buscamos la orden fresca en Neon con todos sus productos vinculados
+  // 1. Buscamos la orden fresca en Neon con todos sus productos vinculados
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
@@ -34,12 +43,10 @@ export default async function PaymentPage({ searchParams }: Props) {
     },
   });
 
-  // Si la orden no existe en tu base de datos, mostramos 404
   if (!order) {
     notFound();
   }
 
-  // Si la orden ya fue pagada previamente, no dejamos que vuelvan a pagar
   if (order.status === "PAID") {
     return (
       <div className="min-h-screen bg-[#F5F2EB] flex flex-col items-center justify-center pt-24 text-center">
@@ -53,38 +60,57 @@ export default async function PaymentPage({ searchParams }: Props) {
   let preferenceId = "";
 
   try {
-    // 3. Estructuramos la Preferencia de Pago para Mercado Pago
+    // 2. Inicializamos el SDK dentro del flujo dinámico para asegurar la lectura del Token fresco
+    const mpClient = new MercadoPagoConfig({
+      accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
+    });
+
+    // 3. Construimos y saneamos las URLs de redirección de retorno de forma inmutable y limpia
+    const successUrl = buildAbsoluteUrl("/checkout/success-mp");
+    const failureUrl = buildAbsoluteUrl(`/checkout/payment?orderId=${orderId}&status=failed`);
+    const pendingUrl = buildAbsoluteUrl(`/checkout/payment?orderId=${orderId}&status=pending`);
+
+    console.log("🔗 URLs de Retorno Sanitizadas que se enviarán a MP:", {
+      success: successUrl,
+      failure: failureUrl,
+      pending: pendingUrl
+    });
+
+    // 4. Estructuramos la Preferencia usando snake_case para coincidir perfectamente con los tipos estrictos del SDK
     const preference = new Preference(mpClient);
     
     const response = await preference.create({
       body: {
-        // Mapeamos los productos artesanales reales que están en la orden de Neon
         items: order.items.map((item) => ({
           id: item.productId,
           title: item.product.title,
           quantity: item.quantity,
-          unit_price: Number(item.price), // Mercado Pago exige formato numérico plano
-          currency_id: "ARS",
+          unit_price: Number(item.price), // 👈 unit_price (Snake Case) cumple con el tipado estricto
+          currency_id: "ARS",            // 👈 currency_id (Snake Case) cumple con el tipado estricto
         })),
-        // Sumamos el costo de envío como un ítem de servicio adicional
         shipments: {
           cost: Number(order.shipping),
           mode: "not_specified",
         },
-        // Configuramos a dónde vuelve el cliente al terminar de pagar
-        back_urls: {
-          success: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/checkout/success-mp`,
-          failure: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/checkout/payment?orderId=${orderId}&status=failed`,
-          pending: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/checkout/payment?orderId=${orderId}&status=pending`,
+        back_urls: {                      // 👈 back_urls cumple con el tipado estricto
+          success: successUrl,
+          failure: failureUrl,
+          pending: pendingUrl,
         },
-        auto_return: "approved",
-        external_reference: order.id, // Guardamos el ID de Neon para reconocer el pago después
+        auto_return: "approved",          // 👈 auto_return cumple con el tipado estricto
+        external_reference: order.id,     // 👈 external_reference cumple con el tipado estricto
       },
     });
 
     preferenceId = response.id || "";
   } catch (error) {
-    console.error("❌ Error generando la preferencia de Mercado Pago:", error);
+    console.log("❌ Error generando la preferencia de Mercado Pago:");
+    
+    if (error && typeof error === "object") {
+      console.log("Causa del fallo:", JSON.stringify(error, null, 2));
+    } else {
+      console.log(error);
+    }
   }
 
   return (
@@ -125,7 +151,7 @@ export default async function PaymentPage({ searchParams }: Props) {
           {preferenceId ? (
             <div className="text-center space-y-3">
               <p className="text-[11px] text-stone-500 italic">
-                Acá abajo va a aparecer el botón oficial en el siguiente paso...
+                Hacé clic en el botón oficial para continuar en la plataforma de Mercado Pago:
               </p>
               <div className="text-center space-y-3">
                 <PaymentButton preferenceId={preferenceId} />
