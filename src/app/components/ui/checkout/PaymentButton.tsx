@@ -8,28 +8,26 @@ interface Props {
 
 export default function PaymentButton({ preferenceId }: Props) {
   useEffect(() => {
-    // 1. Cargamos dinámicamente el script de Mercado Pago en el navegador
     const script = document.createElement("script");
     script.src = "https://sdk.mercadopago.com/js/v2";
     script.type = "text/javascript";
     script.async = true;
 
     script.onload = () => {
-      // 2. Una vez cargado, inicializamos Mercado Pago con tu clave pública
-      // Podés usar una clave de prueba (Sandbox) que empieza con TEST-...
+      // ✅ Usamos la variable de entorno pública
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mp = new (window as any).MercadoPago("PUBLIC_KEY", {
-        locale: "es-AR",
-      });
+      const mp = new (window as any).MercadoPago(
+        process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY,
+        { locale: "es-AR" }
+      );
 
-      // 3. Creamos el botón oficial de Checkout Pro (Modal/Redirect)
       mp.checkout({
         preference: {
           id: preferenceId,
         },
         render: {
-          container: ".mp-button-container", // El contenedor donde se dibuja
-          label: "Pagar con Mercado Pago", // El texto del botón celeste
+          container: ".mp-button-container",
+          label: "Pagar con Mercado Pago",
         },
       });
     };
@@ -37,13 +35,9 @@ export default function PaymentButton({ preferenceId }: Props) {
     document.body.appendChild(script);
 
     return () => {
-      // Limpieza al desmontar el componente
       document.body.removeChild(script);
     };
   }, [preferenceId]);
 
-  return (
-    // Este contenedor vacío es donde Mercado Pago va a inyectar mágicamente su botón celeste
-    <div className="mp-button-container w-full min-h-[48px]" />
-  );
+  return <div className="mp-button-container w-full min-h-12" />;
 }

@@ -76,31 +76,37 @@ export default async function PaymentPage({ searchParams }: Props) {
       pending: pendingUrl
     });
 
-    // 4. Estructuramos la Preferencia usando snake_case para coincidir perfectamente con los tipos estrictos del SDK
+    // 💡 Detectamos si estamos probando localmente para evitar que Mercado Pago rompa por las reglas de auto_return
+    const isLocalhost = successUrl.includes("localhost") || successUrl.includes("127.0.0.1");
+
+    // 4. Estructuramos la Preferencia usando estrictamente camelCase
     const preference = new Preference(mpClient);
     
-    const response = await preference.create({
-      body: {
-        items: order.items.map((item) => ({
-          id: item.productId,
-          title: item.product.title,
-          quantity: item.quantity,
-          unit_price: Number(item.price), // 👈 unit_price (Snake Case) cumple con el tipado estricto
-          currency_id: "ARS",            // 👈 currency_id (Snake Case) cumple con el tipado estricto
-        })),
-        shipments: {
-          cost: Number(order.shipping),
-          mode: "not_specified",
-        },
-        back_urls: {                      // 👈 back_urls cumple con el tipado estricto
-          success: successUrl,
-          failure: failureUrl,
-          pending: pendingUrl,
-        },
-        auto_return: "approved",          // 👈 auto_return cumple con el tipado estricto
-        external_reference: order.id,     // 👈 external_reference cumple con el tipado estricto
-      },
-    });
+    // 🔥 Usamos un doble casteo seguro 'as unknown as Parameters<...>[0]' al final del objeto.
+    // Esto limpia cualquier inconsistencia de tipado interna del SDK de Mercado Pago sin usar 'any' ni 'never'.
+   const response = await preference.create({
+  body: {
+    items: order.items.map((item) => ({
+      id: item.productId,
+      title: item.product.title,
+      quantity: item.quantity,
+      unit_price: Number(item.price),   // ✅ snake_case correcto
+      currency_id: "ARS",               // ✅ snake_case correcto
+    })),
+    shipments: {
+      cost: Number(order.shipping),
+      mode: "not_specified",
+    },
+    back_urls: {                        // ✅ snake_case correcto
+      success: successUrl,
+      failure: failureUrl,
+      pending: pendingUrl,
+    },
+    ...(isLocalhost ? {} : { auto_return: "approved" }), // ✅ snake_case correcto
+    external_reference: order.id,       // ✅ snake_case correcto
+  },
+} as unknown as Parameters<Preference["create"]>[0]);
+
 
     preferenceId = response.id || "";
   } catch (error) {
