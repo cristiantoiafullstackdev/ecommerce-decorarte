@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       });
 
       if (!mpResponse.ok) {
-        console.error('❌ Error al consultar veracidad del pago en servidores de Mercado Pago');
+        console.log('❌ Error al consultar veracidad del pago en servidores de Mercado Pago');
         return NextResponse.json({ error: 'Failed to verify payment with MP API' }, { status: 400 });
       }
 
@@ -45,7 +45,10 @@ export async function POST(request: Request) {
     // Mercado Pago exige un estado HTTP 200 para confirmar la recepción del aviso
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('❌ Error crítico procesando el webhook de Mercado Pago:', error);
+    console.log('❌ Error crítico procesando el webhook de Mercado Pago:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+
+
