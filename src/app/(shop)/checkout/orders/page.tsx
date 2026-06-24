@@ -1,107 +1,174 @@
-"use client";
-
-import React, { Suspense } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { GameStyles } from '@/app/components/iconos/DecorArteBrand';
+import Image from 'next/image';
+import { notFound } from 'next/navigation';
+import prisma from '@/lib/prisma';
+import { DecorarteIsotype, GameStyles } from '@/app/components/iconos/DecorArteBrand';
 
-// 1. Separamos el contenido que consume useSearchParams en un componente interno
-function OrderSuccessContent() {
-  const searchParams = useSearchParams();
-  
-  // Recuperamos el ID de la orden real devuelto por tu Backend Neon
-  const orderId = searchParams.get('orderId') || 'DA-XXXXX';
-  const paymentMethod = searchParams.get('method') || 'mercadopago';
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function OrderDetailsPage({ params }: Props) {
+  // Resolvemos de forma asíncrona los parámetros de la URL de Next.js
+  const { id } = await params;
+
+  // Consultamos directamente tu base de datos Neon de manera súper rápida
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: {
+      items: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  });
+
+  // Si alguien inventa un ID o no existe en tu base de datos, mostramos un 404 limpio de Next.js
+  if (!order) {
+    notFound(); 
+  }
+
+  // Comparamos el método de pago de forma segura
+  const isTransfer = String(order.paymentMethod).toLowerCase() === 'transferencia';
+  const discount = isTransfer ? Math.round(Number(order.total) * 0.10) : 0;
+  const finalTotal = Number(order.total);
 
   return (
-    <main className="min-h-screen bg-[#F5F2EB] pt-36 pb-20 px-4 flex items-center justify-center">
+    <main className="min-h-screen bg-[#F5F2EB] pt-36 pb-20 px-4 md:px-8">
       <GameStyles />
       
-      <div className="max-w-xl w-full bg-white p-8 md:p-12 rounded-2xl border-2 border-stone-200 shadow-sm text-center space-y-8">
+      <div className="max-w-4xl mx-auto space-y-8">
         
-        {/* Isotipo animado de éxito */}
-        <div className="mx-auto w-16 h-16 bg-[#E2DCD0] rounded-full flex items-center justify-center text-[#B57C38] border border-stone-300">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-8 h-8">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
-        </div>
-
-        {/* Encabezado informativo */}
-        <div className="space-y-2">
-          <span className="text-[10px] text-[#B57C38] uppercase tracking-widest font-black bg-[#E2DCD0] px-3 py-1 rounded-md">
-            ¡Orden Recibida!
-          </span>
-          <h1 className="text-2xl font-black text-[#1C1816] uppercase tracking-wider pt-2">
-            Tu pedido está en taller
-          </h1>
-          <p className="text-xs text-stone-500 max-w-sm mx-auto">
-            Gracias por elegir DecorArte. Nuestros artesanos ya tienen la notificación para empezar a preparar tus piezas.
-          </p>
-        </div>
-
-        {/* Recuadro del ID de Orden (Neon DB ID) */}
-        <div className="bg-[#FCF9F5] p-4 rounded-xl border-2 border-dashed border-stone-300 inline-block px-6">
-          <span className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">
-            Código de Seguimiento
-          </span>
-          <span className="text-sm font-mono font-black text-[#1C1816]">
-            {orderId}
-          </span>
-        </div>
-
-        {/* Contenido Dinámico según Método de Pago */}
-        {paymentMethod === 'transferencia' ? (
-          <div className="bg-[#Fdfaf2] border-2 border-[#B57C38]/20 rounded-xl p-5 text-left space-y-3">
-            <h4 className="text-xs font-black text-[#B57C38] uppercase tracking-wider flex items-center gap-1.5">
-              🏛️ Datos de Transferencia Bancaria
-            </h4>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Para que empecemos la fabricación, por favor realiza el depósito neto del total con el 10% de descuento ya aplicado y envía el comprobante.
+        {/* Encabezado Principal de la Orden */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-sm">
+          <div>
+            <span className="text-[10px] text-[#B57C38] uppercase tracking-widest font-black bg-[#E2DCD0] px-2.5 py-1 rounded-md">
+              Seguimiento del Taller
+            </span>
+            <h1 className="text-xl md:text-2xl font-black text-[#1C1816] uppercase tracking-tight mt-3">
+              Orden #{order.id.slice(0, 8)}...
+            </h1>
+            <p className="text-xs text-stone-500 mt-1">
+              Registrada el {new Date(order.createdAt).toLocaleDateString('es-AR')}
             </p>
-            <div className="pt-2 space-y-1 text-xs font-medium text-stone-800 border-t border-stone-200">
-              <p><span className="font-bold text-stone-400">Banco:</span> Galicia</p>
-              <p><span className="font-bold text-stone-400">Alias:</span> decorarte.taller.cba</p>
-              <p><span className="font-bold text-stone-400">CBU:</span> 0070000000000000000000</p>
-            </div>
           </div>
-        ) : (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-left flex items-start gap-3">
-            <span className="text-emerald-700 text-base">💳</span>
-            <div>
-              <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
-                Acreditación Inmediata
-              </h4>
-              <p className="text-[11px] text-emerald-700 mt-0.5">
-                Mercado Pago validó tu transacción correctamente. Te enviamos el detalle y la factura digital a tu correo.
-              </p>
-            </div>
-          </div>
-        )}
 
-        {/* Botonera de Salida */}
-        <div className="border-t border-stone-200 pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link 
-            href="/" 
-            className="w-full sm:w-auto text-center border-2 border-[#1C1816] bg-[#1C1816] text-[#FFC107] px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[#B57C38] hover:border-[#B57C38] hover:text-white transition-all shadow-[0_4px_0px_#B57C38] active:translate-y-0.5 active:shadow-none"
-          >
-            Seguir Comprando
-          </Link>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-black uppercase text-stone-400 tracking-wider">Estado:</span>
+            {order.status === 'PAID' ? (
+              <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-black px-4 py-2 rounded-xl uppercase tracking-wider">
+                ✓ Acreditado / En Fabricación
+              </span>
+            ) : (
+              <span className="bg-[#FFF9C4] text-[#F57F17] border border-[#FBC02D] text-xs font-black px-4 py-2 rounded-xl uppercase tracking-wider">
+                ⌛ Pendiente de Pago
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+          
+          {/* COLUMNA IZQUIERDA: DETALLE DE LOS PRODUCTOS ARTESANALES */}
+          <div className="md:col-span-7 bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-sm space-y-6">
+            <h3 className="text-xs font-black text-[#1C1816] uppercase tracking-widest pb-3 border-b border-stone-150">
+              Piezas Solicitadas
+            </h3>
+
+            <div className="divide-y divide-stone-150">
+              {order.items.map((item) => (
+                <div key={item.id} className="py-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-stone-200 bg-stone-50 shrink-0">
+                      {item.product.images && item.product.images.length > 0 ? (
+                        <Image src={item.product.images[0]} alt={item.product.title} fill className="object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-stone-400">
+                          <DecorarteIsotype size={20} />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-stone-900 line-clamp-1">{item.product.title}</h4>
+                      <p className="text-[10px] text-stone-500 font-bold">Cantidad: {item.quantity}</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-[#1C1816]">
+                    ${(Number(item.price) * item.quantity).toLocaleString('es-AR')}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Desglose de precios seguro */}
+            <div className="border-t-2 border-stone-200 pt-4 space-y-2.5 text-xs font-semibold text-stone-600">
+              <div className="flex justify-between">
+                <span>Costo de Envío Logístico</span>
+                <span className="font-bold text-[#1C1816]">
+                  {Number(order.shipping) === 0 ? "Gratis" : `$${Number(order.shipping).toLocaleString('es-AR')}`}
+                </span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 font-bold text-[11px]">
+                  <span>Beneficio 10% Transferencia Bancaria</span>
+                  <span>-${discount.toLocaleString('es-AR')}</span>
+                </div>
+              )}
+              <div className="border-t border-stone-200 pt-3 flex justify-between text-base font-black text-[#1C1816]">
+                <span>Total de la Orden</span>
+                <span className="text-lg font-black text-[#B57C38]">${finalTotal.toLocaleString('es-AR')}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* COLUMNA DERECHA: DIRECCIÓN DE DESPACHO Y CONTACTO */}
+          <div className="md:col-span-5 space-y-6">
+            <div className="bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-sm space-y-4">
+              <h3 className="text-xs font-black text-[#1C1816] uppercase tracking-widest pb-3 border-b border-stone-150">
+                Información de Entrega
+              </h3>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <span className="text-stone-400 block text-[10px] uppercase tracking-wider">Destinatario</span>
+                  <span className="font-bold text-stone-800">{order.firstName} {order.lastName}</span>
+                </div>
+
+                <div>
+                  <span className="text-stone-400 block text-[10px] uppercase tracking-wider">Contacto</span>
+                  <span className="font-medium text-stone-800">{order.email}</span>
+                  <span className="block text-stone-500">Tel/WA: {order.phone}</span>
+                </div>
+
+                <div>
+                  <span className="text-stone-400 block text-[10px] uppercase tracking-wider">Dirección de Despacho</span>
+                  <p className="font-medium text-stone-800">{order.address}</p>
+                  <p className="text-stone-500">
+                    {order.city}, {order.province.toUpperCase()} (CP: {order.zipCode})
+                  </p>
+                </div>
+
+                {order.notes && (
+                  <div className="bg-[#FCF9F5] p-3 rounded-lg border border-stone-150 text-[11px] text-stone-600 italic">
+                    &quot;{order.notes}&quot;
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Link 
+              href="/"
+              className="block text-center bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white py-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+            >
+              Volver a la Tienda
+            </Link>
+          </div>
+
         </div>
 
       </div>
     </main>
   );
 }
-
-// 2. Exportamos por defecto el componente principal envuelto en un Suspense Boundary
-export default function OrderSuccessPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#F5F2EB] flex flex-col items-center justify-center text-center">
-        <span className="text-xs font-black uppercase text-stone-500 tracking-widest">Cargando orden del taller...</span>
-      </div>
-    }>
-      <OrderSuccessContent />
-    </Suspense>
-  );
-} 

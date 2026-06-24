@@ -90,8 +90,9 @@ function SuccessMpContent() {
         </div>
 
         <div className="border-t border-stone-200 pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+          {/* 🔥 MODIFICADO: Ahora apunta a /checkout/orders/ en lugar de /orders/ */}
           <Link 
-            href={`/orders/${orderId}`} 
+            href={`/checkout/orders/${orderId}`} 
             className="w-full sm:flex-1 text-center border-2 border-[#1C1816] bg-white text-[#1C1816] hover:bg-stone-50 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition-colors"
           >
             🔍 Ver Detalles de Orden
