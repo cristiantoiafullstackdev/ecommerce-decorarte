@@ -1,19 +1,26 @@
-import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { DecorarteIsotype, GameStyles } from '@/app/components/iconos/DecorArteBrand';
 
+// Forzamos que la página de detalle siempre sea dinámica para evitar problemas con Prisma en el build
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 export default async function OrderDetailsPage({ params }: Props) {
-  // En Next.js 15+ resolvemos los params asíncronamente
+  // Resolvemos de forma asíncrona los parámetros de la URL
   const { id } = await params;
 
-  // Consultamos directamente la base de datos Neon
+  // Validación de seguridad para el compilador de Next.js
+  if (!id || id === 'undefined') {
+    notFound();
+  }
+
+  // Consultamos la base de datos de manera segura
   const order = await prisma.order.findUnique({
     where: { id },
     include: {
@@ -25,11 +32,12 @@ export default async function OrderDetailsPage({ params }: Props) {
     },
   });
 
+  // Si no existe la orden, devolvemos un 404 limpio
   if (!order) {
-    notFound(); // 404 limpio si no se encuentra la orden
+    notFound(); 
   }
 
-  // Convertimos a string y minúsculas para evitar el error de tipado estricto TS(2367) con el Enum de Neon
+  // Comparamos el método de pago de forma segura
   const isTransfer = String(order.paymentMethod).toLowerCase() === 'transferencia';
   const discount = isTransfer ? Math.round(Number(order.total) * 0.10) : 0;
   const finalTotal = Number(order.total);
@@ -40,11 +48,11 @@ export default async function OrderDetailsPage({ params }: Props) {
       
       <div className="max-w-4xl mx-auto space-y-8">
         
-        {/* Encabezado Principal de Orden */}
+        {/* Encabezado Principal de la Orden */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-sm">
           <div>
             <span className="text-[10px] text-[#B57C38] uppercase tracking-widest font-black bg-[#E2DCD0] px-2.5 py-1 rounded-md">
-              Detalle del Pedido
+              Seguimiento del Taller
             </span>
             <h1 className="text-xl md:text-2xl font-black text-[#1C1816] uppercase tracking-tight mt-3">
               Orden #{order.id.slice(0, 8)}...
@@ -70,10 +78,10 @@ export default async function OrderDetailsPage({ params }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           
-          {/* COLUMNA IZQUIERDA: PRODUCTOS A FABRICAR */}
+          {/* COLUMNA IZQUIERDA: DETALLE DE LOS PRODUCTOS */}
           <div className="md:col-span-7 bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-sm space-y-6">
             <h3 className="text-xs font-black text-[#1C1816] uppercase tracking-widest pb-3 border-b border-stone-150">
-              Piezas en Producción
+              Piezas Solicitadas
             </h3>
 
             <div className="divide-y divide-stone-150">
@@ -101,25 +109,28 @@ export default async function OrderDetailsPage({ params }: Props) {
               ))}
             </div>
 
+            {/* Desglose de precios seguro */}
             <div className="border-t-2 border-stone-200 pt-4 space-y-2.5 text-xs font-semibold text-stone-600">
               <div className="flex justify-between">
-                <span>Costo de Envío</span>
-                <span className="font-bold text-[#1C1816]">${Number(order.shipping).toLocaleString('es-AR')}</span>
+                <span>Costo de Envío Logístico</span>
+                <span className="font-bold text-[#1C1816]">
+                  {Number(order.shipping) === 0 ? "Gratis" : `$${Number(order.shipping).toLocaleString('es-AR')}`}
+                </span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 font-bold text-[11px]">
-                  <span>Beneficio 10% Transferencia</span>
+                  <span>Beneficio 10% Transferencia Bancaria</span>
                   <span>-${discount.toLocaleString('es-AR')}</span>
                 </div>
               )}
               <div className="border-t border-stone-200 pt-3 flex justify-between text-base font-black text-[#1C1816]">
-                <span>Total Abonado</span>
+                <span>Total de la Orden</span>
                 <span className="text-lg font-black text-[#B57C38]">${finalTotal.toLocaleString('es-AR')}</span>
               </div>
             </div>
           </div>
 
-          {/* COLUMNA DERECHA: DATOS DE DESPACHO Y CONTACTO */}
+          {/* COLUMNA DERECHA: DIRECCIÓN DE DESPACHO Y CONTACTO */}
           <div className="md:col-span-5 space-y-6">
             <div className="bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-sm space-y-4">
               <h3 className="text-xs font-black text-[#1C1816] uppercase tracking-widest pb-3 border-b border-stone-150">
@@ -135,7 +146,7 @@ export default async function OrderDetailsPage({ params }: Props) {
                 <div>
                   <span className="text-stone-400 block text-[10px] uppercase tracking-wider">Contacto</span>
                   <span className="font-medium text-stone-800">{order.email}</span>
-                  <span className="block text-stone-500">Tel: {order.phone}</span>
+                  <span className="block text-stone-500">Tel/WA: {order.phone}</span>
                 </div>
 
                 <div>

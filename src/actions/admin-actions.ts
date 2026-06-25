@@ -101,7 +101,7 @@ export async function updateOrderStatus(
       },
     });
 
-    // Revalidamos los datos de las rutas afectadas
+    // Revalidamos los datos de las rutas afectadas para refrescar el taller
     revalidatePath("/admin");
     revalidatePath(`/checkout/orders/${orderId}`);
 
