@@ -2,9 +2,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Roboto_Slab } from 'next/font/google';
-import IconWhatsApp from "@/app/components/iconos/IconWhatsApp";
 import AuthProvider from "@/providers/AuthProvider"; // <-- Importamos nuestro puente de sesión
-import { Navbar } from "@/app/components/ui/header/Navbar";
 
 const robotoSlab = Roboto_Slab({
   subsets: ['latin'],
@@ -29,11 +27,9 @@ export default function RootLayout({
       <body className="w-full p-8 flex flex-col">
         {/* Envolvemos la app con AuthProvider para habilitar el uso de sesiones */}
         <AuthProvider>
-          <Navbar />
           <main>
             {children}
           </main>
-          <IconWhatsApp />
         </AuthProvider>
       </body>
     </html>
