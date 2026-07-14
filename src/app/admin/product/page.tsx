@@ -4,6 +4,7 @@ import React, { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import { getAdminProducts, upsertProduct, deleteProduct, AdminProduct, ProductInput } from "@/actions/product-actions";
 import { DecorarteIsotype, GameStyles } from "@/app/components/iconos/DecorArteBrand";
+import FileUploader from "@/app/components/admin/FileUploader";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
@@ -347,7 +348,10 @@ export default function AdminProductsPage() {
               {/* URL de Imagen */}
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">URL de Imagen Principal</label>
-                <input type="text" name="imageUrl" value={formData.imageUrl} onChange={handleFormChange} placeholder="https://ejemplo.com/estante.jpg" className="w-full px-4 py-2.5 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold focus:outline-none transition-colors" />
+                <FileUploader 
+                  currentUrl={formData.imageUrl} 
+                  onUploadComplete={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))} 
+                />
               </div>
 
               {/* Botonera del Modal */}
