@@ -2,10 +2,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
+import { OrderStatus } from '@prisma/client';
 import { updateOrderStatus } from '@/actions/admin-actions';
 import { DecorarteIsotype, GameStyles } from '@/app/components/iconos/DecorArteBrand';
 
-// 🚀 Forzamos que la página se renderice siempre en tiempo de ejecución
+// Forzamos que la página se renderice siempre en tiempo de ejecución para captar cambios frescos de base de datos
 export const dynamic = 'force-dynamic';
 
 interface Props {
@@ -13,14 +14,14 @@ interface Props {
 }
 
 export default async function AdminOrderDetailPage({ params }: Props) {
-  // 1. Resolvemos correctamente los parámetros asíncronos para cumplir con Next.js 15+
+  // Resolvemos correctamente los parámetros asíncronos para cumplir con Next.js 15+
   const { id } = await params;
 
   if (!id || id === 'undefined' || id === '[id]') {
     notFound();
   }
 
-  // 2. Consultamos directamente tu base de datos Neon mediante Prisma
+  // Consultamos directamente tu base de datos Neon mediante Prisma con todas sus relaciones
   const order = await prisma.order.findUnique({
     where: { id },
     include: {
@@ -41,10 +42,14 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   const discount = isTransfer ? Math.round(Number(order.total) * 0.10) : 0;
   const finalTotal = Number(order.total);
 
-  // Mapeo estricto de badges alineados con el enum de tu base de datos (PENDING, PAID)
-  const statusLabels: Record<string, { text: string; color: string; bg: string }> = {
+  // Mapeo estricto de badges alineados con el enum completo de tu base de datos
+  const statusLabels: Record<OrderStatus, { text: string; color: string; bg: string }> = {
     PENDING: { text: 'Pendiente de Pago', color: 'text-amber-700 border-amber-300', bg: 'bg-amber-50' },
-    PAID: { text: 'Acreditado / Listo', color: 'text-emerald-700 border-emerald-300', bg: 'bg-emerald-50' }
+    PAID: { text: 'Pago Acreditado / Listo', color: 'text-emerald-700 border-emerald-300', bg: 'bg-emerald-50' },
+    PREPARING: { text: 'En Preparación & Calidad', color: 'text-blue-700 border-blue-300', bg: 'bg-blue-50' },
+    SHIPPED: { text: 'Despachado / En Viaje', color: 'text-indigo-700 border-indigo-300', bg: 'bg-indigo-50' },
+    DELIVERED: { text: 'Entregado al Cliente', color: 'text-stone-700 border-stone-300', bg: 'bg-stone-100' },
+    CANCELLED: { text: 'Pedido Cancelado', color: 'text-red-700 border-red-300', bg: 'bg-red-50' }
   };
 
   const currentStatus = statusLabels[order.status] || { 
@@ -53,10 +58,22 @@ export default async function AdminOrderDetailPage({ params }: Props) {
     bg: 'bg-stone-50' 
   };
 
-  // 3. Server Action inline para procesar el cambio de estado con recarga instantánea de Next.js
+  // Definición secuencial para el Timeline Tracker (Stepper)
+  const steps: { key: OrderStatus; label: string; desc: string }[] = [
+    { key: 'PENDING', label: 'Pago Pendiente', desc: 'Esperando acreditación' },
+    { key: 'PAID', label: 'Acreditado', desc: 'Listo para procesar' },
+    { key: 'PREPARING', label: 'Preparación', desc: 'Control & herrajes' },
+    { key: 'SHIPPED', label: 'Despachado', desc: 'En manos del transporte' },
+    { key: 'DELIVERED', label: 'Entregado', desc: 'Finalizado' }
+  ];
+
+  // Encontrar el índice del paso actual para pintar el progreso
+  const currentStepIndex = steps.findIndex(step => step.key === order.status);
+
+  // Server Action inline para procesar el cambio de estado con recarga instantánea de Next.js
   const changeStatusAction = async (formData: FormData) => {
     "use server";
-    const targetStatus = formData.get("status") as "PENDING" | "PAID";
+    const targetStatus = formData.get("status") as OrderStatus;
     if (targetStatus) {
       await updateOrderStatus(id, targetStatus);
     }
@@ -93,6 +110,44 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         </Link>
       </div>
 
+      {/* STEPPER VISUAL DE PROGRESO (UX PREMIUM) */}
+      {order.status !== 'CANCELLED' && (
+        <div className="bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-xs">
+          <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-4">
+            {/* Línea de fondo decorativa para escritorio */}
+            <div className="hidden md:block absolute left-4 right-4 top-1/2 h-0.5 bg-stone-100 -translate-y-1/2 z-0" />
+            
+            {steps.map((step, index) => {
+              const isCompleted = index <= currentStepIndex;
+              const isCurrent = index === currentStepIndex;
+
+              return (
+                <div key={step.key} className="flex md:flex-col items-center gap-4 md:text-center z-10 w-full md:w-1/5 relative">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 font-bold text-xs shrink-0
+                    ${isCompleted 
+                      ? 'bg-[#B57C38] border-[#B57C38] text-[#FFF9F2] shadow-sm shadow-[#B57C38]/25' 
+                      : 'bg-white border-stone-200 text-stone-400'
+                    }
+                    ${isCurrent ? 'ring-4 ring-amber-100 scale-105' : ''}
+                  `}>
+                    {isCompleted ? '✓' : index + 1}
+                  </div>
+                  <div className="space-y-0.5 text-left md:text-center">
+                    <h4 className={`text-[10px] font-black uppercase tracking-wider ${isCompleted ? 'text-[#1C1816]' : 'text-stone-400'}`}>
+                      {step.label}
+                    </h4>
+                    <p className="text-[9px] font-bold text-stone-400 leading-none">
+                      {step.desc}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* DETALLES DE DESPACHO Y CONTROL */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* COLUMNA IZQUIERDA: Detalle de maderas y montos */}
@@ -116,7 +171,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                       )}
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-stone-900">{item.product.title}</h4>
+                      <h4 className="text-xs font-bold text-stone-900 uppercase">{item.product.title}</h4>
                       <p className="text-[10px] text-stone-500 font-bold">Cantidad: {item.quantity} unidades</p>
                     </div>
                   </div>
@@ -150,41 +205,41 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         {/* COLUMNA DERECHA: Control de estados y Logística */}
         <div className="lg:col-span-4 space-y-6">
           
-          {/* PANEL DE CONTROL DE ESTADOS DE PAGO DIRECTO EN NEON */}
+          {/* PANEL DE CONTROL DE ESTADOS DIRECTO EN NEON */}
           <div className="bg-[#1C1816] text-[#FFF9F2] p-6 rounded-2xl border-2 border-stone-800 shadow-md space-y-4">
             <h3 className="text-xs font-black uppercase tracking-widest text-[#FFC107] border-b border-stone-800 pb-3">
-              ⚡ Controlar Pago (Neon DB)
+              ⚡ Control de Hoja de Ruta
             </h3>
             
-            <form action={changeStatusAction} className="space-y-2">
-              <button
-                type="submit"
-                name="status"
-                value="PAID"
-                disabled={order.status === 'PAID'}
-                className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-between ${
-                  order.status === 'PAID'
-                    ? 'bg-[#B57C38] text-white shadow-sm'
-                    : 'bg-stone-900 hover:bg-stone-800 text-stone-300'
-                }`}
-              >
-                <span>✓ Acreditar Pago</span>
-                {order.status === 'PAID' && <span className="text-[9px] bg-white/20 px-2 py-0.5 rounded-md">Activo</span>}
-              </button>
+            <p className="text-[10px] text-stone-400 font-bold leading-relaxed">
+              Selecciona el estado operativo correspondiente para actualizar los planos técnicos y la logística del pedido.
+            </p>
+
+            <form action={changeStatusAction} className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="status-select" className="block text-[9px] font-black uppercase tracking-widest text-stone-400">
+                  Estado Operativo
+                </label>
+                <select
+                  id="status-select"
+                  name="status"
+                  defaultValue={order.status}
+                  className="w-full bg-stone-900 border-2 border-stone-800 text-[#FFF9F2] font-bold text-xs uppercase p-3 rounded-xl focus:border-[#B57C38] focus:outline-none transition-colors h-11"
+                >
+                  <option value="PENDING">⌛ Pendiente de Pago</option>
+                  <option value="PAID">✓ Pago Acreditado</option>
+                  <option value="PREPARING">🪵 En Preparación &amp; Calidad</option>
+                  <option value="SHIPPED">🚚 Despachado / En Viaje</option>
+                  <option value="DELIVERED">🏡 Entregado</option>
+                  <option value="CANCELLED">❌ Cancelado / Dado de baja</option>
+                </select>
+              </div>
 
               <button
                 type="submit"
-                name="status"
-                value="PENDING"
-                disabled={order.status === 'PENDING'}
-                className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-between ${
-                  order.status === 'PENDING'
-                    ? 'bg-[#B57C38] text-white shadow-sm'
-                    : 'bg-stone-900 hover:bg-stone-800 text-stone-300'
-                }`}
+                className="w-full py-3 bg-[#B57C38] hover:bg-[#96632B] text-[#FFF9F2] rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-[0_4px_0px_#96632B] active:translate-y-0.5 active:shadow-none"
               >
-                <span>⌛ Marcar Pendiente</span>
-                {order.status === 'PENDING' && <span className="text-[9px] bg-white/20 px-2 py-0.5 rounded-md">Activo</span>}
+                Actualizar Estado
               </button>
             </form>
           </div>

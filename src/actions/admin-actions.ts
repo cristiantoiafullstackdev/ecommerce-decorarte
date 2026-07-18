@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { OrderStatus } from "@prisma/client";
 
 // Definimos interfaces estrictas para evitar el uso de 'any'
 export interface AdminOrderProduct {
@@ -91,7 +92,7 @@ export async function getAdminOrders(): Promise<{ ok: boolean; orders: AdminOrde
  */
 export async function updateOrderStatus(
   orderId: string,
-  newStatus: "PENDING" | "PAID"
+  newStatus: OrderStatus
 ): Promise<{ ok: boolean; message: string }> {
   try {
     await prisma.order.update({
@@ -101,13 +102,23 @@ export async function updateOrderStatus(
       },
     });
 
+    // Mapeo semántico de nombres legibles para la respuesta
+    const statusNames: Record<OrderStatus, string> = {
+      PENDING: "PENDIENTE",
+      PAID: "PAGADA / LISTA",
+      PREPARING: "EN PREPARACIÓN",
+      SHIPPED: "DESPACHADA / EN VIAJE",
+      DELIVERED: "ENTREGADA",
+      CANCELLED: "CANCELADA"
+    };
+
     // Revalidamos los datos de las rutas afectadas para refrescar el taller
     revalidatePath("/admin");
     revalidatePath(`/checkout/orders/${orderId}`);
 
     return { 
       ok: true, 
-      message: `El estado de la orden fue actualizado a ${newStatus === "PAID" ? "PAGADA" : "PENDIENTE"} con éxito.` 
+      message: `El estado de la orden fue actualizado a "${statusNames[newStatus]}" con éxito.` 
     };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Error desconocido al actualizar";
