@@ -84,7 +84,7 @@ export default function AdminDashboardPage() {
       {/* ENCABEZADO PRINCIPAL CON LOGO DE LA MARCA */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-xs">
         <div className="flex items-center gap-4">
-          <div className="p-2.5 bg-stone-100 rounded-xl border border-stone-200 flex-shrink-0">
+          <div className="p-2.5 bg-stone-100 rounded-xl border border-stone-200 shrink-0">
             <DecorarteIsotype size={40} className="text-[#B57C38]" />
           </div>
           <div>

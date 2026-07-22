@@ -27,7 +27,7 @@ function LoginForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -44,7 +44,16 @@ function LoginForm() {
       return;
     }
 
-    router.push(callbackUrl);
+    // Si hay una callbackUrl explícita (ej. intentó entrar al checkout), la respetamos.
+    // Si no, redirigimos dinámicamente según su rol consultando la sesión o una ruta inteligente.
+    if (callbackUrl !== '/') {
+      router.push(callbackUrl);
+    } else {
+      // Redirección escalable por roles
+      // (Podemos verificar el rol o mandar a una ruta central que decida)
+      router.push('/'); // O una ruta de redirección por roles
+    }
+    
     router.refresh();
   };
 
