@@ -11,6 +11,7 @@ datasource db {
 enum Role {
   USER
   ADMIN
+  MANAGER
 }
 
 // 1. NUEVO ENUM PARA CONTROLAR LA LÓGICA DE PAGO
@@ -25,10 +26,19 @@ model User {
   email         String    @unique
   password      String
   role          Role      @default(USER)
+  isFirstLogin  Boolean   @default(true)
   image         String?
   orders        Order[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+model StoreSettings {
+  id            String   @id @default(cuid())
+  storeName     String   @default("Mi E-commerce")
+  contactEmail  String   @default("admin@ecommerce.com")
+  currency      String   @default("ARS")
+  updatedAt     DateTime @updatedAt
 }
 
 model Product {

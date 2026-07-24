@@ -1,7 +1,7 @@
 // src/app/auth/login/page.tsx
 "use client";
 
-import React, { useState, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -21,6 +21,15 @@ function LoginForm() {
 
   // Si el middleware rebotó al usuario del checkout, capturamos a dónde iba
   const callbackUrl = searchParams.get('callbackUrl') || '/';
+
+  // Detectamos si el flujo apunta hacia el sector de administración
+  const isAdminLogin = callbackUrl.includes('/admin');
+
+  // Textos dinámicos según el rol o destino
+  const titleText = isAdminLogin ? "Acceso al Panel de Administración" : "Ingresar al Taller de Artesanías";
+  const subtitleText = isAdminLogin 
+    ? "Iniciá sesión con tus credenciales de gestor para administrar DecorArte." 
+    : "Iniciá sesión para continuar con tu compra en DecorArte.";
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -64,10 +73,10 @@ function LoginForm() {
           <DecorarteIsotype size={45} />
         </div>
         <h1 className="text-xl font-black text-[#1C1816] uppercase tracking-tight">
-          Ingresar al Taller
+          {titleText}
         </h1>
         <p className="text-xs text-stone-500 mt-1">
-          Iniciá sesión para continuar con tu compra en DecorArte.
+          {subtitleText}
         </p>
       </div>
 
