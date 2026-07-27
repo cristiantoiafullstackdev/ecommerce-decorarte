@@ -1,80 +1,43 @@
 // src/app/admin/clients/page.tsx
-import Link from 'next/link';
+import React from 'react';
 import prisma from '@/lib/prisma';
+import ClientsClient from '@/app/components/ui/clients/ClientsClient';
 
 export default async function AdminClientsPage() {
-  // Listado de clientes o compradores extraídos de las órdenes o tabla dedicada
-  const clients = await prisma.order.findMany({
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      phone: true,
-      city: true,
-      province: true,
-      createdAt: true,
+  // Obtenemos los usuarios con sus órdenes asociadas
+  const users = await prisma.user.findMany({
+    include: {
+      orders: {
+        select: {
+          total: true,
+          province: true,
+          paymentMethod: true,
+        }
+      }
     },
-    distinct: ['email'],
-    orderBy: { createdAt: 'desc' },
+    orderBy: {
+      createdAt: 'desc'
+    }
   });
 
   return (
-    <div className="p-8 space-y-6 bg-[#FCF9F5] min-h-screen font-sans text-stone-900">
-      <div className="flex justify-between items-center border-b border-stone-200 pb-6">
+    <div className="p-8 space-y-8 bg-[#FCF9F5] min-h-screen font-sans max-w-7xl mx-auto text-stone-900">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-200 pb-6">
         <div>
-          <h1 className="text-xl font-black uppercase tracking-wider text-stone-900">
-            👥 Directorio de Clientes DecorArte
+          <span className="text-[10px] text-[#B57C38] uppercase tracking-widest font-black bg-white px-2.5 py-1 rounded-md border border-stone-200">
+            Panel de Control CRM
+          </span>
+          <h1 className="text-2xl font-black text-[#1C1816] uppercase tracking-tight mt-2">
+            Comunidad y Clientes ({users.length})
           </h1>
-          <p className="text-xs text-stone-500 font-medium">
-            Información amigable de compradores, historial de contacto y ubicación de entrega.
+          <p className="text-xs text-stone-600 mt-1">
+            Gestión integral de compradores, volúmenes de facturación y roles de acceso.
           </p>
         </div>
-        <Link
-          href="/admin"
-          className="text-xs font-bold text-stone-600 hover:text-stone-900 underline"
-        >
-          &larr; Volver al Dashboard
-        </Link>
       </div>
 
-      {/* Tabla del Directorio de Clientes */}
-      <div className="bg-white rounded-2xl border-2 border-stone-200 overflow-hidden shadow-xs">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="bg-stone-100 border-b border-stone-200 text-stone-500 font-black uppercase text-[10px] tracking-wider">
-              <th className="p-4">Comprador</th>
-              <th className="p-4">Contacto Electrónico / Tel</th>
-              <th className="p-4">Ubicación</th>
-              <th className="p-4 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-stone-100 font-medium text-stone-700">
-            {clients.map((client) => (
-              <tr key={client.id} className="hover:bg-stone-50 transition-colors">
-                <td className="p-4 font-bold text-stone-900">
-                  {client.firstName} {client.lastName}
-                </td>
-                <td className="p-4">
-                  <span className="block font-medium text-stone-800 select-all">{client.email}</span>
-                  <span className="block text-[11px] text-stone-500">{client.phone}</span>
-                </td>
-                <td className="p-4 text-stone-600">
-                  {client.city}, {client.province?.toUpperCase()}
-                </td>
-                <td className="p-4 text-right">
-                  <Link
-                    href={`/admin/orders?query=${client.email}`}
-                    className="px-3 py-1.5 bg-[#B57C38] text-white rounded-xl text-[10px] font-black uppercase hover:bg-[#96632B] transition-all"
-                  >
-                    Ver Pedidos
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Renderizamos el componente cliente interactivo */}
+      <ClientsClient initialClients={users} />
     </div>
   );
 }

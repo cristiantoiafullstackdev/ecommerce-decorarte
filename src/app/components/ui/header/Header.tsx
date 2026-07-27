@@ -55,15 +55,15 @@ export default function Header({ wishCount = 0, currentSection = "catalogo" }: H
             </div>
           </Link>
 
-          {/* 2. ENLACES DE NAVEGACIÓN EN LINEA */}
+          {/* 2. ENLACES DE NAVEGACIÓN EN LINEA (Redirigiendo a rutas reales) */}
           <div className="hidden lg:flex items-center space-x-10">
-            <Link href="/#catalogo" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "catalogo" ? "game-link-active" : ""}`}>
+            <Link href="/" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "catalogo" ? "game-link-active" : ""}`}>
               Catálogo
             </Link>
-            <Link href="/#nosotros" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "nosotros" ? "game-link-active" : ""}`}>
+            <Link href="/nosotros" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "nosotros" ? "game-link-active" : ""}`}>
               Nosotros
             </Link>
-            <Link href="/#contacto" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "contacto" ? "game-link-active" : ""}`}>
+            <Link href="/contacto" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "contacto" ? "game-link-active" : ""}`}>
               Contacto
             </Link>
           </div>

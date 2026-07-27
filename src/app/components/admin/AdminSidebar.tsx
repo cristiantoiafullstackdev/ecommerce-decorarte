@@ -1,3 +1,4 @@
+// src/app/components/admin/AdminSidebar.tsx
 "use client";
 
 import Link from "next/link";
@@ -11,6 +12,7 @@ export default function AdminSidebar() {
     { name: "Dashboard", href: "/admin" },
     { name: "Productos y Stock", href: "/admin/product" },
     { name: "Órdenes", href: "/admin/orders" },
+    { name: "Clientes", href: "/admin/clientes" }, // <- Añadido CRM de Clientes
   ];
 
   return (
