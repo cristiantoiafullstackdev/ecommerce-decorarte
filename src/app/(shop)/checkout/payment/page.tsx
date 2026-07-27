@@ -1,3 +1,4 @@
+//src/app/(shop)/checkout/payment/page.tsx
 import PaymentButton from "@/app/components/ui/checkout/PaymentButton";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";

@@ -9,7 +9,7 @@ export default function AdminSidebar() {
 
   const navLinks = [
     { name: "Dashboard", href: "/admin" },
-    { name: "Productos y Stock", href: "/admin/product" }, // O la ruta de productos que tengas
+    { name: "Productos y Stock", href: "/admin/product" },
     { name: "Órdenes", href: "/admin/orders" },
   ];
 

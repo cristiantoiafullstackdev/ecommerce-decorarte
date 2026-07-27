@@ -1,3 +1,4 @@
+//src/app/(shop)/checkout/success-transfer/page.tsx
 "use client";
 
 import React, { useEffect, Suspense } from 'react';
