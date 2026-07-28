@@ -12,7 +12,7 @@ export default function AdminSidebar() {
     { name: "Dashboard", href: "/admin" },
     { name: "Productos y Stock", href: "/admin/product" },
     { name: "Órdenes", href: "/admin/orders" },
-    { name: "Clientes", href: "/admin/clientes" }, // <- Añadido CRM de Clientes
+    { name: "Clientes", href: "/admin/clientes" },
   ];
 
   return (
