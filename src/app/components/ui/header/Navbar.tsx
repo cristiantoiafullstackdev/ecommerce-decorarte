@@ -4,14 +4,10 @@ import Header from "./Header";
 export const Navbar = async () => {
   // 1. Traemos las categorías vivas desde Neon (Listo para la conexión futura)
 
-  // 2. Valores provisorios (Cambiarán en la Fase de Zustand)
-  const wishCount = 0;
-
   return (
     <>
       {/* Acoplamos el Header limpio enviándole los datos requeridos */}
       <Header 
-        wishCount={wishCount}
         currentSection="catalogo"
       />
       

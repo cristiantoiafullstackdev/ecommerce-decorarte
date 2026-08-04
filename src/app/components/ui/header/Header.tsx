@@ -1,9 +1,11 @@
-// src/app/components/ui/header/Header.tsx
+//src/app/components/ui/header/Header.tsx
+
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link'; // Importamos Link nativo de Next
-import { useSession, signOut } from 'next-auth/react'; // Hook de autenticación
+import { useState, useEffect, useRef } from 'react';
+import { searchProducts } from '@/actions/product-actions';
+import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
 import { 
   DecorarteLogo, 
   DecorarteIsotype, 
@@ -15,27 +17,122 @@ import {
 } from '@/app/components/iconos/DecorArteBrand';
 import { useCartStore } from '@/store/cart/cart-store';
 import SidebarCart from '@/app/components/cart/SidebarCart';
+import { useWishlistStore } from '@/store/wishlist/wishlist-store';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface HeaderProps {
-  wishCount: number;
   currentSection?: string;
+  wishCout?: number;
 }
 
-export default function Header({ wishCount = 0, currentSection = "catalogo" }: HeaderProps) {
+interface SearchProduct {
+  id: string;
+  title: string;
+  slug: string;
+  images: string[];
+  price: number;
+}
+
+// Extensión segura para la propiedad role del usuario en NextAuth
+interface ExtendedUser {
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: string;
+}
+
+interface ExtendedSession {
+  user?: ExtendedUser;
+}
+
+export default function Header({ currentSection = "catalogo" }: HeaderProps) {
+  const router = useRouter();
+
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false); // Control para menú flotante
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   
-  // Consumimos NextAuth Session
-  const { data: session, status } = useSession();
+  // Referencias para manejar clics fuera de los menús flotantes
+  const searchRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  
+  const { data: session, status } = useSession() as { data: ExtendedSession | null; status: string };
   const isAuthenticated = status === "authenticated";
+  const userId = session?.user?.id; // <--- 1. Extraemos el id del usuario actual
 
   const hasHydrated = useCartStore((state) => state._hasHydrated);
   const totalItems = useCartStore((state) => state.getTotalItems());
+  const loadUserCart = useCartStore((state) => state.loadUserCart); // <--- 2. Traemos la función de carga del carrito
 
-  const handleSearch = () => console.log("Buscar...");
-  const handleWishlist = () => console.log("Wishlist...");
-
+  const hasHydratedWish = useWishlistStore((state) => state._hasHydrated);
+  const wishCount = useWishlistStore((state) => state.getWishCount());
+  const loadUserFavorites = useWishlistStore((state) => state.loadUserFavorites); // <--- 3. Traemos la función de carga de favorito
+  const displayWishCount = hasHydratedWish ? wishCount : 0;  
   const displayItems = hasHydrated ? totalItems : 0;
+
+  // Efecto para cerrar menús al hacer clic fuera de ellos
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Efecto para buscar en tiempo real con debounce
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchQuery.trim().length > 1) {
+        setIsLoading(true);
+        const results = await searchProducts(searchQuery);
+        setSearchResults(results);
+        setIsLoading(false);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (!isSearchOpen) {
+      setSearchQuery('');
+      setSearchResults([]);
+    }
+  };
+
+  const handleWishlist = () => {
+    router.push('/favorites');
+  };
+
+  // 4. EL PUENTE DE SINCRONIZACIÓN AUTOMÁTICA
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      // Si hay un usuario logueado, traemos sus datos reales de la BD
+      loadUserCart(userId);
+      loadUserFavorites(userId);
+    } else if (status === "unauthenticated") {
+      // Si cerró sesión o no hay nadie, limpiamos la memoria visual local
+      useCartStore.getState().clearCart();
+      useWishlistStore.getState().clearWishlist();
+    }
+  }, [isAuthenticated, userId, status, loadUserCart, loadUserFavorites]);
 
   return (
     <>
@@ -55,7 +152,7 @@ export default function Header({ wishCount = 0, currentSection = "catalogo" }: H
             </div>
           </Link>
 
-          {/* 2. ENLACES DE NAVEGACIÓN EN LINEA (Redirigiendo a rutas reales) */}
+          {/* 2. ENLACES DE NAVEGACIÓN EN LINEA */}
           <div className="hidden lg:flex items-center space-x-10">
             <Link href="/" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "catalogo" ? "game-link-active" : ""}`}>
               Catálogo
@@ -70,15 +167,100 @@ export default function Header({ wishCount = 0, currentSection = "catalogo" }: H
 
           {/* 3. CONTROLES CON BOTONES COMPACTOS */}
           <div className="flex items-center space-x-6">
-            <button onClick={handleSearch} className="focus:outline-none p-1 game-bounce" aria-label="Buscar">
-              <DecorarteSearchIcon size={36} />
-            </button>
 
+            {/* BOTÓN DEL BUSCAR (LUPA) */}
+            <div className="relative flex items-center" ref={searchRef}>
+              <button onClick={toggleSearch} className="focus:outline-none p-1 game-bounce text-stone-800 hover:text-[#C84B31] transition-colors" aria-label="Buscar">
+                <DecorarteSearchIcon size={36} />
+              </button>
+
+              {/* Panel Desplegable de Búsqueda Predictiva Rediseñado */}
+              {isSearchOpen && (
+                <div className="absolute right-0 top-14 w-80 sm:w-96 bg-[#FCF9F5] p-4 rounded-2xl border-2 border-stone-300 shadow-2xl z-50 flex flex-col gap-3 animate-fadeIn">
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      placeholder="¿Qué estás buscando hoy?"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      autoFocus
+                      className="w-full bg-white px-4 py-2.5 text-xs font-bold text-stone-800 rounded-xl border border-stone-200 shadow-inner focus:outline-none focus:border-[#C84B31] tracking-wide"
+                    />
+                    {searchQuery && (
+                      <button 
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 text-xs font-bold"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Lista de resultados */}
+                  <div className="max-h-72 overflow-y-auto flex flex-col gap-1.5 pr-1">
+                    {isLoading && (
+                      <div className="py-6 text-center">
+                        <span className="inline-block w-5 h-5 border-2 border-[#C84B31] border-t-transparent rounded-full animate-spin"></span>
+                        <p className="text-[10px] text-stone-400 mt-2 uppercase tracking-widest font-black">Buscando tesoros...</p>
+                      </div>
+                    )}
+
+                    {!isLoading && searchQuery.trim().length > 1 && searchResults.length === 0 && (
+                      <div className="py-8 text-center flex flex-col items-center gap-1">
+                        <span className="text-2xl">🔍</span>
+                        <p className="text-xs font-bold text-stone-700 uppercase tracking-tight">Sin resultados</p>
+                        <p className="text-[10px] text-stone-400">Prueba con otra palabra clave</p>
+                      </div>
+                    )}
+
+                    {!isLoading && searchQuery.trim().length <= 1 && (
+                      <div className="py-4 text-center">
+                        <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold">Escribe al menos 2 letras</p>
+                      </div>
+                    )}
+
+                    {searchResults.map((product) => (
+                      <Link
+                        key={product.id}
+                        href={`/product/${product.slug}`}
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setSearchQuery('');
+                        }}
+                        className="flex items-center gap-3 p-2 bg-white/60 hover:bg-white rounded-xl border border-stone-200/80 hover:border-[#C84B31]/40 transition-all shadow-sm group"
+                      >
+                        {/* Miniatura */}
+                        <div className="w-12 h-12 relative rounded-lg overflow-hidden bg-stone-100 shrink-0 border border-stone-200">
+                          <Image 
+                            src={product.images[0] ? (product.images[0].startsWith('http') ? product.images[0] : `/products/${product.images[0]}`) : '/placeholder.jpg'} 
+                            alt={product.title}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="flex flex-col overflow-hidden flex-1">
+                          <span className="text-xs font-black text-stone-800 truncate uppercase tracking-tight group-hover:text-[#C84B31] transition-colors">
+                            {product.title}
+                          </span>
+                          <span className="text-xs font-bold text-[#C84B31] mt-0.5">
+                            ${Number(product.price).toLocaleString()}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* BOTÓN DE FAVORITOS */}
             <button onClick={handleWishlist} className="focus:outline-none p-1 relative game-bounce" aria-label="Favoritos">
-              <DecorarteHeartIcon size={36} filled={wishCount > 0} />
-              {wishCount > 0 && (
-                <span className="absolute -top-1 -right-1.5 bg-[#C84B31] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-stone-900 shadow">
-                  {wishCount}
+              <DecorarteHeartIcon size={40} filled={displayWishCount > 0} />
+              {displayWishCount > 0 && (
+                <span className="absolute -top-3 -right-1.5 bg-[#C84B31] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-stone-900 shadow">
+                  {displayWishCount}
                 </span>
               )}
             </button>
@@ -89,7 +271,7 @@ export default function Header({ wishCount = 0, currentSection = "catalogo" }: H
               className="focus:outline-none p-1 relative game-bounce" 
               aria-label="Carrito"
             >
-              <DecorarteBagIcon size={44} />
+              <DecorarteBagIcon size={48} />
               {displayItems > 0 && (
                 <span className="absolute -top-1 -right-1.5 bg-[#C84B31] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-stone-900 shadow">
                   {displayItems}
@@ -97,10 +279,9 @@ export default function Header({ wishCount = 0, currentSection = "catalogo" }: H
               )}
             </button>
 
-            {/* 🛠️ PERFIL DINÁMICO CONECTADO A NEXTAUTH */}
-            <div className="relative">
+            {/* PERFIL DINÁMICO CONECTADO A NEXTAUTH */}
+            <div className="relative" ref={profileMenuRef}>
               {isAuthenticated ? (
-                // Si está logueado: Botón abre un menú desplegable rústico
                 <button 
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                   className="focus:outline-none p-1 flex items-center gap-1 text-stone-800 font-bold uppercase tracking-wider text-[11px] game-bounce"
@@ -111,20 +292,18 @@ export default function Header({ wishCount = 0, currentSection = "catalogo" }: H
                   </span>
                 </button>
               ) : (
-                // Si es un visitante anónimo: El ícono te redirige directo a loguearte
                 <Link href="/auth/login" className="focus:outline-none p-1 block game-bounce" aria-label="Iniciar Sesión">
                   <DecorarteUserIcon size={36} />
                 </Link>
               )}
 
-              {/* Menú Flotante Desplegable para Usuarios Autenticados */}
+              {/* Menú Flotante Desplegable */}
               {isAuthenticated && isProfileMenuOpen && (
                 <div className="absolute right-0 mt-3 w-56 bg-[#FCF9F5] rounded-xl border-2 border-stone-200 shadow-xl py-2 z-50 flex flex-col font-bold uppercase text-[10px] tracking-widest text-stone-700 animate-fadeIn">
                   <div className="px-4 py-2 border-b border-stone-200 text-stone-400 font-normal text-[9px] lowercase">
                     Conectado como: <br /><span className="font-bold text-stone-600 normal-case text-xs">{session?.user?.email}</span>
                   </div>
 
-                  {/* Si el rol inyectado desde Neon es ADMIN, pintamos acceso dorado al panel */}
                   {session?.user?.role === 'ADMIN' && (
                     <Link 
                       href="/admin" 
@@ -140,9 +319,15 @@ export default function Header({ wishCount = 0, currentSection = "catalogo" }: H
                   </Link>
 
                   <button 
-                    onClick={() => {
+                    onClick={async () => {
                       setIsProfileMenuOpen(false);
-                      signOut({ callbackUrl: '/' });
+                      // 1. Limpiamos manualmente los stores de Zustand al instante
+                      useCartStore.getState().clearCart();
+                      useWishlistStore.getState().clearWishlist();
+                      
+                      // 2. Cerramos sesión y forzamos recarga total hacia la raíz
+                      await signOut({ redirect: false });
+                      window.location.href = '/';
                     }} 
                     className="px-4 py-3 text-left hover:bg-red-50 text-red-600 border-t border-stone-200 transition-colors mt-1 font-black"
                   >

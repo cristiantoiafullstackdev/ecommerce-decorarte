@@ -6,16 +6,22 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Product, Category } from '@prisma/client';
 import { DecorarteIsotype } from '@/app/components/iconos/DecorArteBrand';
-import { useCartStore } from '@/store/cart/cart-store'; // 1. Importamos el motor
+import { useCartStore } from '@/store/cart/cart-store';
+import { useWishlistStore } from '@/store/wishlist/wishlist-store';
+import { useSession } from 'next-auth/react'; // <--- 1. Importamos la sesión de NextAuth
 
 interface CardProductProps {
   product: Product & { category: Category };
 }
 
 export default function CardProduct({ product }: CardProductProps) {
+  const { data: session } = useSession(); // <--- 2. Obtenemos la sesión actual
+  const userId = session?.user?.id;       // <--- 3. Extraemos el id del usuario logueado
+
+  const toggleFavorite = useWishlistStore((state) => state.toggleFavorite);
+  const isFavorite = useWishlistStore((state) => state.isFavorite(product.id));
+
   const [imgError, setImgError] = useState(false);
-  
-  // Conectamos la acción de añadir al carrito
   const addProductToCart = useCartStore((state) => state.addProductToCart);
   
   const formatPrice = (value: number) => {
@@ -30,8 +36,19 @@ export default function CardProduct({ product }: CardProductProps) {
 
   return (
     <div className="group relative bg-white rounded-2xl border-2 border-stone-200/80 shadow-[0_8px_24px_rgba(28,24,22,0.04)] hover:shadow-[0_12px_32px_rgba(28,24,22,0.12)] hover:border-[#B57C38] transition-all duration-300 flex flex-col overflow-hidden">
+
+      {/* Botón de Favorito con userId */}
+      <button 
+        onClick={() => toggleFavorite(product.id, userId)} // <--- 4. Pasamos el userId aquí
+        className="absolute top-3 right-3 z-10 p-2 bg-white/80 backdrop-blur-xs rounded-full border border-stone-200 hover:scale-110 transition-all shadow-xs"
+        aria-label="Marcar como favorito"
+      >
+        <span className={`text-lg leading-none ${isFavorite ? 'text-[#C84B31] font-bold' : 'text-stone-400'}`}>
+          {isFavorite ? '♥' : '♡'}
+        </span>
+      </button>
       
-      {/* Contenedor de Imagen o Placeholder */}
+      {/* Resto de tu componente imagen y textos... */}
       <div className="relative w-full aspect-square bg-[#F5F2EB] flex items-center justify-center overflow-hidden border-b border-stone-100">
         <span className="absolute top-3 left-3 z-10 bg-[#1C1816] text-[#F5F2EB] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border border-stone-700 shadow-sm">
           {product.category.name}
@@ -42,7 +59,7 @@ export default function CardProduct({ product }: CardProductProps) {
             src={product.images[0]}
             alt={product.title}
             fill
-            sizes="(max-w-768px) 100vw, (max-w-1200px) 50vw, 33vw"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
             onError={() => setImgError(true)}
           />
@@ -60,7 +77,6 @@ export default function CardProduct({ product }: CardProductProps) {
         <div className="absolute inset-0 bg-[#3A2212]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      {/* Datos del Producto */}
       <div className="p-5 flex flex-col grow justify-between bg-[#E2DCD0]">
         <div>
           <h3 className="font-bold text-stone-900 text-base md:text-lg tracking-tight leading-snug group-hover:text-[#B57C38] transition-colors duration-200">
@@ -71,7 +87,6 @@ export default function CardProduct({ product }: CardProductProps) {
           </p>
         </div>
 
-        {/* Precio, Stock y Botonera Doble Mecánica */}
         <div className="mt-4 flex items-center justify-between pt-3 border-t border-stone-300/80">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase tracking-widest text-stone-600 font-bold flex items-center gap-1">
@@ -82,22 +97,19 @@ export default function CardProduct({ product }: CardProductProps) {
             </span>
           </div>
 
-          {/* Grupo de acciones conjuntas */}
           <div className="flex items-center gap-2">
-            {/* BOTÓN 1: Añadir directo a la bolsa (Zustand) */}
+            {/* Botón de Carrito con userId */}
             <button
-              onClick={() => addProductToCart(product, 1)}
+              onClick={() => addProductToCart(product, 1, userId)} // <--- 5. Pasamos el userId aquí también
               disabled={product.stock === 0}
               className="game-bounce bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white border-2 border-[#1C1816] rounded-xl p-3 shadow-[0_3px_0px_#B57C38] active:translate-y-0.75 active:shadow-none disabled:opacity-30 disabled:pointer-events-none transition-all duration-100 focus:outline-none"
               aria-label="Añadir directo a la bolsa"
             >
-              {/* Usamos una bolsa minimalista construida en SVG inline */}
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
               </svg>
             </button>
 
-            {/* BOTÓN 2: Ver detalles (Enlace al slug) */}
             <Link 
               href={`/product/${product.slug}`}
               className="game-bounce bg-[#F5F2EB] hover:bg-[#1C1816] text-[#1C1816] hover:text-[#FFC107] border-2 border-[#1C1816] rounded-xl p-3 shadow-[0_3px_0px_#1C1816] active:translate-y-0.75 active:shadow-none transition-all duration-100 focus:outline-none"
@@ -111,7 +123,6 @@ export default function CardProduct({ product }: CardProductProps) {
           </div>
         </div>
       </div>
-
     </div>
   );
 }

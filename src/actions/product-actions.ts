@@ -152,3 +152,28 @@ export async function deleteProduct(id: string): Promise<{ ok: boolean; message:
     return { ok: false, message: "Error al eliminar." };
   }
 }
+
+export async function searchProducts(query: string) {
+  if (!query || !query.trim()) return [];
+  try {
+    return await prisma.product.findMany({
+      where: {
+        title: {
+          contains: query.trim(),
+          mode: 'insensitive',
+        },
+      },
+      take: 5,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        images: true,
+        price: true,
+      },
+    });
+  } catch (error) {
+    console.error("Error al buscar productos:", error);
+    return [];
+  }
+}

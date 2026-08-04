@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product, Category } from '@prisma/client';
+import { getUserCart, upsertCartItem, removeCartItemAction, clearUserCart } from '@/actions/cart-actions';
 
 export interface CartItem {
   id: string;
@@ -14,7 +15,6 @@ export interface CartItem {
   categoryName: string;
 }
 
-// Nueva interfaz para tipar la dirección en el Front
 export interface ShippingAddress {
   firstName: string;
   lastName: string;
@@ -29,16 +29,17 @@ export interface ShippingAddress {
 
 interface CartState {
   cart: CartItem[];
-  address: ShippingAddress | null; // <-- Estado de la dirección
+  address: ShippingAddress | null;
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
   
-  addProductToCart: (product: Product & { category: Category }, quantity?: number) => void;
-  updateProductQuantity: (productId: string, quantity: number) => void;
-  removeProductFromCart: (productId: string) => void;
-  clearCart: () => void;
+  loadUserCart: (userId: string) => Promise<void>;
+  addProductToCart: (product: Product & { category: Category }, quantity?: number, userId?: string) => Promise<void>;
+  updateProductQuantity: (productId: string, quantity: number, userId?: string) => Promise<void>;
+  removeProductFromCart: (productId: string, userId?: string) => Promise<void>;
+  clearCart: (userId?: string) => Promise<void>;
   
-  setShippingAddress: (address: ShippingAddress) => void; // <-- Acción para guardar la dirección
+  setShippingAddress: (address: ShippingAddress) => void;
   
   getTotalItems: () => number;
   getSubTotal: () => number;
@@ -52,18 +53,34 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       cart: [],
-      address: null, // <-- Inicializa vacía
+      address: null,
       _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
-      addProductToCart: (product, quantity = 1) => {
+      loadUserCart: async (userId: string) => {
+        if (!userId) {
+          set({ cart: [] });
+          return;
+        }
+        const serverCart = await getUserCart(userId);
+        set({ cart: serverCart });
+      },
+
+      addProductToCart: async (product, quantity = 1, userId?: string) => {
         const { cart } = get();
         const productInCart = cart.find((item) => item.id === product.id);
 
-        if (!productInCart) {
-          const finalQuantity = Math.min(quantity, product.stock);
-          if (finalQuantity <= 0) return;
+        let finalQuantity = quantity;
+        if (productInCart) {
+          finalQuantity = Math.min(productInCart.quantity + quantity, product.stock);
+        } else {
+          finalQuantity = Math.min(quantity, product.stock);
+        }
 
+        if (finalQuantity <= 0) return;
+
+        // Actualización optimista local
+        if (!productInCart) {
           set({
             cart: [...cart, {
               id: product.id,
@@ -76,39 +93,57 @@ export const useCartStore = create<CartState>()(
               categoryName: product.category.name,
             }],
           });
-          return;
+        } else {
+          set({
+            cart: cart.map((item) => 
+              item.id === product.id ? { ...item, quantity: finalQuantity } : item
+            ),
+          });
         }
 
-        const newQuantity = Math.min(productInCart.quantity + quantity, product.stock);
-        set({
-          cart: cart.map((item) => 
-            item.id === product.id ? { ...item, quantity: newQuantity } : item
-          ),
-        });
+        // Sincronizar con la BD si hay usuario
+        if (userId) {
+          await upsertCartItem(userId, product.id, finalQuantity);
+        }
       },
 
-      updateProductQuantity: (productId, quantity) => {
+      updateProductQuantity: async (productId, quantity, userId?: string) => {
         const { cart } = get();
+        const itemToUpdate = cart.find((item) => item.id === productId);
+        if (!itemToUpdate) return;
+
+        const verifiedQuantity = Math.max(1, Math.min(quantity, itemToUpdate.stock));
+
         set({
           cart: cart.map((item) => {
             if (item.id !== productId) return item;
-            const verifiedQuantity = Math.max(1, Math.min(quantity, item.stock));
             return { ...item, quantity: verifiedQuantity };
           }),
         });
+
+        if (userId) {
+          await upsertCartItem(userId, productId, verifiedQuantity);
+        }
       },
 
-      removeProductFromCart: (productId) => {
+      removeProductFromCart: async (productId, userId?: string) => {
         const { cart } = get();
         set({ cart: cart.filter((item) => item.id !== productId) });
+
+        if (userId) {
+          await removeCartItemAction(userId, productId);
+        }
       },
 
-      clearCart: () => set({ cart: [] }),
+      clearCart: async (userId?: string) => {
+        set({ cart: [] });
+        if (userId) {
+          await clearUserCart(userId);
+        }
+      },
 
-      // Guarda la dirección capturada en el formulario
       setShippingAddress: (address) => set({ address }),
 
-      // Métodos de cálculo
       getTotalItems: () => get().cart.reduce((total, item) => total + item.quantity, 0),
       getSubTotal: () => get().cart.reduce((sub, item) => sub + item.price * item.quantity, 0),
       getSummary: () => ({

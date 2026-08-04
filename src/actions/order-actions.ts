@@ -1,3 +1,5 @@
+//src/actions/order-actions.ts
+
 'use server';
 
 import prisma from "@/lib/prisma";
@@ -114,5 +116,37 @@ export const createOrder = async (orderData: OrderInput) => {
       ok: false,
       message: message || "Ocurrió un error interno en el servidor."
     };
+  }
+};
+
+
+// ==========================================
+// OBTENER ÓRDENES DEL USUARIO (MIS COMPRAS)
+// ==========================================
+export const getOrdersByUser = async (userId: string) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { userId },
+      include: {
+        items: { // Respetando tu relación exacta 'items'
+          include: {
+            product: {
+              select: {
+                title: true,
+                images: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return { ok: true, orders };
+  } catch (error) {
+    console.error("❌ Error al obtener órdenes del usuario:", error);
+    return { ok: false, message: 'No se pudieron cargar las compras' };
   }
 };

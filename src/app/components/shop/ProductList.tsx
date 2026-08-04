@@ -1,4 +1,5 @@
-// src/app/components/shop/ProductList.tsx
+//src/app/components/shop/ProductList.tsx
+
 "use client";
 
 import React, { useState } from 'react';
@@ -6,28 +7,34 @@ import { Product, Category } from '@prisma/client';
 import CardProduct from './CardProduct';
 import FilterCatalog from './FilterCatalog';
 
-// Definimos la interfaz en inglés agregando la relación compuesta obligatoria con Category
 interface ProductListProps {
   initialProducts: (Product & { category: Category })[];
   categories: Category[];
 }
 
 export default function ProductList({ initialProducts, categories }: ProductListProps) {
-  // Estado local para controlar cuál es la categoría seleccionada por el usuario
   const [activeCategory, setActiveCategory] = useState('todo');
+  const [searchQuery, setSearchQuery] = useState(''); // Estado para la búsqueda en vivo
 
-  // Filtrado reactivo veloz en memoria basado en el slug técnico
-  const filteredProducts = activeCategory === 'todo'
-    ? initialProducts
-    : initialProducts.filter(product => product.category.slug === activeCategory);
+  // Filtrado combinado: Categoría + Texto de búsqueda (por título o descripción)
+  const filteredProducts = initialProducts.filter(product => {
+    const matchesCategory = activeCategory === 'todo' || product.category.slug === activeCategory;
+    const matchesQuery = 
+      product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesCategory && matchesQuery;
+  });
 
   return (
     <>
-      {/* 1. Componente de Filtros unificado y conectado a los estados */}
+      {/* 1. Componente de Filtros y Búsqueda */}
       <FilterCatalog 
         categories={categories}
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       {/* 2. Grilla Dinámica de Productos */}
@@ -38,11 +45,14 @@ export default function ProductList({ initialProducts, categories }: ProductList
           ))}
         </div>
 
-        {/* 3. Estado de feedback condicional si no hay stock ni piezas cargadas en esa categoría */}
+        {/* 3. Estado de feedback condicional si no hay resultados */}
         {filteredProducts.length === 0 && (
-          <div className="w-full text-center py-16">
-            <p className="text-stone-500 font-medium tracking-wide">
-              No se encontraron piezas en esta colección actualmente.
+          <div className="w-full text-center py-16 bg-white/50 backdrop-blur-xs rounded-3xl border border-stone-200 my-8">
+            <p className="text-stone-600 font-bold uppercase tracking-wider text-sm">
+              No se encontraron piezas que coincidan con tu búsqueda.
+            </p>
+            <p className="text-stone-400 text-xs mt-1">
+              Prueba buscando con otros términos o cambiando de categoría.
             </p>
           </div>
         )}
