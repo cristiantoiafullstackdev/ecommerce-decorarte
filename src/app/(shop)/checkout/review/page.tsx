@@ -124,9 +124,23 @@ export default function ReviewPage() {
         {/* COLUMNA IZQUIERDA: Formularios y Selectores */}
         <div className="lg:col-span-7 space-y-8">
           
-          {errorMessage && (
-            <div className="bg-red-50 border-2 border-red-200 text-red-800 rounded-xl p-4 text-xs font-bold uppercase tracking-wider shadow-xs">
-              ⚠️ Error en Taller: {errorMessage}
+        {errorMessage && (
+            <div className="bg-red-50 border-2 border-red-200 text-red-800 rounded-xl p-5 space-y-3 shadow-xs">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider">
+                <span>⚠️ Atención en el Taller</span>
+              </div>
+              <p className="text-xs font-medium leading-relaxed">{errorMessage}</p>
+              
+              {errorMessage.includes("pendiente de pago") && (
+                <div className="pt-2">
+                  <Link 
+                    href="/orders" 
+                    className="inline-block bg-[#1C1816] text-[#FFC107] px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-[#B57C38] hover:text-white transition-all"
+                  >
+                    Ir a Mis Compras a Resolver el Pago →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

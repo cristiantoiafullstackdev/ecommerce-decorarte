@@ -1,3 +1,4 @@
+//src/app/(shop)/orders/page.tsx
 import { getOrdersByUser } from '@/actions/order-actions';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -6,6 +7,9 @@ import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { GameStyles } from '@/app/components/iconos/DecorArteBrand';
 import { OrderStatus } from '@prisma/client'; // <--- Importamos el enum de Prisma
+
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 // Función auxiliar para traducir y dar estilo a cada estado del taller
 function getOrderStatusBadge(status: OrderStatus) {

@@ -40,6 +40,7 @@ interface CartState {
   clearCart: (userId?: string) => Promise<void>;
   
   setShippingAddress: (address: ShippingAddress) => void;
+  clearAddress: () => void;
   
   getTotalItems: () => number;
   getSubTotal: () => number;
@@ -136,13 +137,14 @@ export const useCartStore = create<CartState>()(
       },
 
       clearCart: async (userId?: string) => {
-        set({ cart: [] });
+        set({ cart: [], address: null });
         if (userId) {
           await clearUserCart(userId);
         }
       },
 
       setShippingAddress: (address) => set({ address }),
+      clearAddress: () => set({ address: null }),
 
       getTotalItems: () => get().cart.reduce((total, item) => total + item.quantity, 0),
       getSubTotal: () => get().cart.reduce((sub, item) => sub + item.price * item.quantity, 0),

@@ -323,7 +323,12 @@ export default function Header({ currentSection = "catalogo" }: HeaderProps) {
                       setIsProfileMenuOpen(false);
                       // 1. Limpiamos manualmente los stores de Zustand al instante
                       useCartStore.getState().clearCart();
+                      useCartStore.getState().clearAddress();
                       useWishlistStore.getState().clearWishlist();
+
+                      // ⚠️ Forzamos limpiar el localStorage residual de Zustand de raíz
+                      localStorage.removeItem('decorarte-shopping-cart');
+                      localStorage.removeItem('decorarte-wishlist'); // Si aplica para favoritos
                       
                       // 2. Cerramos sesión y forzamos recarga total hacia la raíz
                       await signOut({ redirect: false });

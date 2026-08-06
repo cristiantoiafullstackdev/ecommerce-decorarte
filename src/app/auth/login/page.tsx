@@ -36,7 +36,7 @@ function LoginForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -53,14 +53,10 @@ function LoginForm() {
       return;
     }
 
-    // Si hay una callbackUrl explícita (ej. intentó entrar al checkout), la respetamos.
-    // Si no, redirigimos dinámicamente según su rol consultando la sesión o una ruta inteligente.
     if (callbackUrl !== '/') {
       router.push(callbackUrl);
     } else {
-      // Redirección escalable por roles
-      // (Podemos verificar el rol o mandar a una ruta central que decida)
-      router.push('/'); // O una ruta de redirección por roles
+      router.push('/');
     }
     
     router.refresh();
@@ -94,7 +90,16 @@ function LoginForm() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-xs font-black text-stone-700 uppercase tracking-wider mb-2">Contraseña</label>
+          {/* Fila superior de la contraseña con el enlace de recuperación */}
+          <div className="flex items-center justify-between mb-2">
+            <label htmlFor="password" className="block text-xs font-black text-stone-700 uppercase tracking-wider">Contraseña</label>
+            <Link 
+              href="/auth/forgot-password" 
+              className="text-[11px] font-bold text-[#B57C38] hover:text-[#1C1816] uppercase tracking-wider transition-colors"
+            >
+              ¿Olvidaste tu clave?
+            </Link>
+          </div>
           <input required disabled={isSubmitting} id="password" type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-sm text-stone-800 font-medium focus:outline-none transition-colors disabled:opacity-50" />
         </div>
 

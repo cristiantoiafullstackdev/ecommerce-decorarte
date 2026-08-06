@@ -3,7 +3,7 @@
 'use server';
 
 import prisma from "@/lib/prisma";
-import { PaymentMethod } from "@prisma/client";
+import { PaymentMethod } from "@prisma/client";     
 
 interface OrderItemInput {
   productId: string;
@@ -22,7 +22,7 @@ interface OrderInput {
   province: string;
   zipCode: string;
   notes?: string;
-  paymentMethod: 'mercadopago' | 'transferencia'; // 1. AGREGADO EN INPUT
+  paymentMethod: 'mercadopago' | 'transferencia';
   items: OrderItemInput[];
 }
 
@@ -30,7 +30,21 @@ export const createOrder = async (orderData: OrderInput) => {
   try {
     const { items, userId, paymentMethod, ...shippingData } = orderData;
     
-    // 1. Validar productos y calcular precios reales desde el servidor
+    // 1. VALIDACIÓN DE NEGOCIO: ¿Tiene una orden pendiente de pago?
+    const existingPendingOrder = await prisma.order.findFirst({
+      where: {
+        userId: userId,
+        status: 'PENDING'
+      },
+      select: { id: true }
+    });
+
+    if (existingPendingOrder) {
+      const shortId = existingPendingOrder.id.slice(0, 8).toUpperCase();
+      throw new Error(`Tenés un pedido pendiente de pago (#${shortId}). Debés completarlo o cancelarlo antes de iniciar una nueva compra.`);
+    }
+
+    // 2. Validar productos y calcular precios reales desde el servidor
     let subTotal = 0;    
     const dbProducts = await prisma.product.findMany({
       where: { id: { in: items.map(i => i.productId) } }
@@ -40,7 +54,8 @@ export const createOrder = async (orderData: OrderInput) => {
       const dbProduct = dbProducts.find(p => p.id === item.productId);
       if (!dbProduct) {
         throw new Error(`La pieza artesanal con ID ${item.productId} ya no está disponible.`);
-      }      
+      }       
+      // Nota: Validamos que exista stock general en taller, pero NO lo descontamos hasta que pague
       if (dbProduct.stock < item.quantity) {
         throw new Error(`Stock insuficiente en taller para: "${dbProduct.title}". Disponibles: ${dbProduct.stock}`);
       }
@@ -49,11 +64,11 @@ export const createOrder = async (orderData: OrderInput) => {
 
     const shipping = shippingData.province === 'cordoba' ? 4500 : 8500;
     
-    // 2. CALCULAR DESCUENTO SEGÚN MÉTODO DE PAGO
+    // 3. CALCULAR DESCUENTO SEGÚN MÉTODO DE PAGO
     const discount = paymentMethod === 'transferencia' ? Math.round(subTotal * 0.10) : 0;
     const total = subTotal + shipping - discount;
 
-    // 3. Transacción Atómica en Neon
+    // 4. Transacción Atómica en Neon
     const order = await prisma.$transaction(async (tx) => {
       
       const newOrder = await tx.order.create({
@@ -61,11 +76,9 @@ export const createOrder = async (orderData: OrderInput) => {
           userId: userId,
           subTotal: subTotal,
           shipping: shipping,
-          discount: discount, // Enviamos el descuento a la base de datos
+          discount: discount,
           total: total,
           status: 'PENDING', 
-          
-          // Mapeamos el Enum correspondiente para la BD
           paymentMethod: paymentMethod === 'transferencia' ? PaymentMethod.TRANSFERENCIA : PaymentMethod.MERCADOPAGO,
           
           firstName: shippingData.firstName,
@@ -88,15 +101,14 @@ export const createOrder = async (orderData: OrderInput) => {
         }
       });
 
-      // 4. Descontar stock real en el taller
-      for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity
-            }
-          }
+      // 5. VACIAR EL CARRITO DEL USUARIO PARA EVITAR DUPLICADOS
+      const userCart = await tx.cart.findUnique({
+        where: { userId: userId }
+      });
+
+      if (userCart) {
+        await tx.cartItem.deleteMany({
+          where: { cartId: userCart.id }
         });
       }
 
@@ -106,7 +118,7 @@ export const createOrder = async (orderData: OrderInput) => {
     return {
       ok: true,
       orderId: order.id,
-      message: "Orden de compra congelada en base de datos de forma exitosa."
+      message: "Orden de compra generada de forma exitosa."
     };
 
   } catch (error) {
@@ -119,16 +131,17 @@ export const createOrder = async (orderData: OrderInput) => {
   }
 };
 
-
-// ==========================================
-// OBTENER ÓRDENES DEL USUARIO (MIS COMPRAS)
-// ==========================================
 export const getOrdersByUser = async (userId: string) => {
   try {
+    if (!userId) {
+      return { ok: false, orders: [], message: "Usuario no autenticado" };
+    }
     const orders = await prisma.order.findMany({
-      where: { userId },
+      where: {
+        userId: userId, // 👈 Blindaje estricto por ID de usuario en la base de datos
+      },
       include: {
-        items: { // Respetando tu relación exacta 'items'
+        items: {
           include: {
             product: {
               select: {
