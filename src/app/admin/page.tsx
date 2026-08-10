@@ -43,6 +43,16 @@ export default async function AdminDashboard() {
             Revisar pendientes &rarr;
           </Link>
         </div>
+        {/* ⚙️ NUEVA TARJETA DE CONFIGURACIÓN DE ENVÍOS */}
+        <div className="bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-xs space-y-2 flex flex-col justify-between">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Logística</span>
+            <div className="text-lg font-black text-stone-900 mt-1">Costos de Envío</div>
+          </div>
+          <Link href="/admin/settings" className="text-[11px] font-bold text-[#B57C38] hover:underline block pt-1">
+            Modificar tarifas &rarr;
+          </Link>
+        </div>
       </div>
     </div>
   );

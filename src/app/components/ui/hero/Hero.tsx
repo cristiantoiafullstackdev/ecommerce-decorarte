@@ -19,7 +19,7 @@ export default function HeroShop() {
         aria-hidden="true" 
       />
 
-      {/* Contenedor alineado estéticamente con el aire de la captura */}
+      {/* Contenedor */}
       <div className="relative z-10 max-w-2xl px-8 md:px-16 lg:px-24 text-[#F5F2EB]">
         
         <span className="text-[#FFC107] text-xs font-bold uppercase tracking-[0.3em] block mb-3">

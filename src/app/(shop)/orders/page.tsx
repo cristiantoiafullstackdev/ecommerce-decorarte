@@ -128,6 +128,16 @@ export default async function OrdersPage() {
                   </div>
                 </div>
 
+                {/* 💬 Botón de Acceso Directo al Detalle y Chat del Taller */}
+                <div className="pt-2 flex justify-end">
+                  <Link
+                    href={`/checkout/orders/${order.id}`}
+                    className="w-full sm:w-auto text-center px-6 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2"
+                  >
+                    <span>💬 Ver Detalle y Chatear con el Taller</span>
+                  </Link>
+                </div>
+
               </div>
             ))}
           </div>

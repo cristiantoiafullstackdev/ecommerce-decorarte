@@ -4,8 +4,9 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { DecorarteIsotype, GameStyles } from '@/app/components/iconos/DecorArteBrand';
+import OrderChat from '@/app/components/orders/OrderChat'; 
+import { getOrderMessages } from '@/actions/order-messages-actions';
 
-// Forzamos que la página de detalle siempre sea dinámica para evitar problemas con Prisma en el build
 export const dynamic = 'force-dynamic';
 
 interface Props {
@@ -13,15 +14,13 @@ interface Props {
 }
 
 export default async function OrderDetailsPage({ params }: Props) {
-  // Resolvemos de forma asíncrona los parámetros de la URL
   const { id } = await params;
 
-  // Validación de seguridad para el compilador de Next.js
   if (!id || id === 'undefined') {
     notFound();
   }
 
-  // Consultamos la base de datos de manera segura
+  // Consultamos la orden y sus items
   const order = await prisma.order.findUnique({
     where: { id },
     include: {
@@ -33,15 +32,28 @@ export default async function OrderDetailsPage({ params }: Props) {
     },
   });
 
-  // Si no existe la orden, devolvemos un 404 limpio
   if (!order) {
     notFound(); 
   }
 
-  // Comparamos el método de pago de forma segura
+  // 1. CÁLCULO MATEMÁTICO EXACTO Y TRANSPARENTE
+  // Subtotal puro de los productos solicitados
+  const productsSubtotal = order.items.reduce(
+    (acc, item) => acc + Number(item.price) * item.quantity, 
+    0
+  );
+
+  // Verificamos si es transferencia para aplicar el 10% SOLO sobre los productos
   const isTransfer = String(order.paymentMethod).toLowerCase() === 'transferencia';
-  const discount = isTransfer ? Math.round(Number(order.total) * 0.10) : 0;
-  const finalTotal = Number(order.total);
+  const discount = isTransfer ? Math.round(productsSubtotal * 0.10) : 0;
+
+  // El costo de envío guardado en la orden (o calculado)
+  const shippingCost = Number(order.shipping) || 0;
+
+  // Total final verificado: (Subtotal - Descuento) + Envío
+  const verifiedTotal = (productsSubtotal - discount) + shippingCost;
+
+  const { messages } = await getOrderMessages(id);
 
   return (
     <main className="min-h-screen bg-[#F5F2EB] pt-36 pb-20 px-4 md:px-8">
@@ -79,7 +91,7 @@ export default async function OrderDetailsPage({ params }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           
-          {/* COLUMNA IZQUIERDA: DETALLE DE LOS PRODUCTOS */}
+          {/* COLUMNA IZQUIERDA: DETALLE DE LOS PRODUCTOS Y PRECIOS */}
           <div className="md:col-span-7 bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-sm space-y-6">
             <h3 className="text-xs font-black text-[#1C1816] uppercase tracking-widest pb-3 border-b border-stone-150">
               Piezas Solicitadas
@@ -110,23 +122,35 @@ export default async function OrderDetailsPage({ params }: Props) {
               ))}
             </div>
 
-            {/* Desglose de precios seguro */}
+            {/* Desglose de precios transparente y amigable */}
             <div className="border-t-2 border-stone-200 pt-4 space-y-2.5 text-xs font-semibold text-stone-600">
+              
+              {/* Subtotal de piezas */}
+              <div className="flex justify-between">
+                <span>Subtotal de Piezas</span>
+                <span className="font-bold text-[#1C1816]">${productsSubtotal.toLocaleString('es-AR')}</span>
+              </div>
+
+              {/* Costo de Envío */}
               <div className="flex justify-between">
                 <span>Costo de Envío Logístico</span>
                 <span className="font-bold text-[#1C1816]">
-                  {Number(order.shipping) === 0 ? "Gratis" : `$${Number(order.shipping).toLocaleString('es-AR')}`}
+                  {shippingCost === 0 ? "Gratis" : `$${shippingCost.toLocaleString('es-AR')}`}
                 </span>
               </div>
+
+              {/* Beneficio Transferencia */}
               {discount > 0 && (
                 <div className="flex justify-between text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 font-bold text-[11px]">
                   <span>Beneficio 10% Transferencia Bancaria</span>
                   <span>-${discount.toLocaleString('es-AR')}</span>
                 </div>
               )}
+
+              {/* Total Final */}
               <div className="border-t border-stone-200 pt-3 flex justify-between text-base font-black text-[#1C1816]">
                 <span>Total de la Orden</span>
-                <span className="text-lg font-black text-[#B57C38]">${finalTotal.toLocaleString('es-AR')}</span>
+                <span className="text-lg font-black text-[#B57C38]">${verifiedTotal.toLocaleString('es-AR')}</span>
               </div>
             </div>
           </div>
@@ -177,6 +201,19 @@ export default async function OrderDetailsPage({ params }: Props) {
         </div>
 
       </div>
+
+      {/* SECCIÓN DE COMUNICACIÓN CON EL TALLER */}
+      <div className="max-w-4xl mx-auto bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-sm mt-8">
+         <h3 className="text-xs font-black text-[#1C1816] uppercase tracking-widest mb-6 pb-3 border-b border-stone-150">
+           Conversación con el Taller
+         </h3>
+         <OrderChat 
+           orderId={order.id} 
+           userId={order.userId} 
+           initialMessages={messages || []} 
+         />
+      </div>         
+
     </main>
   );
 }

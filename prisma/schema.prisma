@@ -100,6 +100,9 @@ model Order {
   
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  
+  // Feedback de estados de ordenes a usuarios
+  messages  OrderMessage[]
 }
 model OrderItem {
   id        String  @id @default(cuid())
@@ -162,4 +165,18 @@ model PasswordResetToken {
   expires   DateTime
 
   @@unique([email, token])
+}
+
+model OrderMessage {
+  id        String   @id @default(cuid())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  sender    Role     // ADMIN o USER (para saber quién escribió el mensaje)
+  message   String   // El texto del mensaje o nota del estado
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String
 }

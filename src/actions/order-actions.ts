@@ -4,6 +4,7 @@
 
 import prisma from "@/lib/prisma";
 import { PaymentMethod } from "@prisma/client";     
+import { getShippingCosts } from "./settings-actions";
 
 interface OrderItemInput {
   productId: string;
@@ -62,11 +63,17 @@ export const createOrder = async (orderData: OrderInput) => {
       subTotal += dbProduct.price * item.quantity;
     }
 
-    const shipping = shippingData.province === 'cordoba' ? 4500 : 8500;
+// Definir costo de envío según la provincia
+    const shippingCosts = await getShippingCosts();
+    const shipping = shippingData.province.toLowerCase() === 'cordoba' 
+      ? shippingCosts.cordoba 
+      : shippingCosts.nacional;
     
-    // 3. CALCULAR DESCUENTO SEGÚN MÉTODO DE PAGO
+    // 3. CALCULAR DESCUENTO: 10% exclusivo sobre el subtotal de los productos
     const discount = paymentMethod === 'transferencia' ? Math.round(subTotal * 0.10) : 0;
-    const total = subTotal + shipping - discount;
+    
+    // 4. TOTAL FINAL: (Subtotal - Descuento por transferencia) + Envío
+    const total = (subTotal - discount) + shipping;
 
     // 4. Transacción Atómica en Neon
     const order = await prisma.$transaction(async (tx) => {
