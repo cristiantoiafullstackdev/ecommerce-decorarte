@@ -1,14 +1,16 @@
+// src/actions/order-messages-actions.ts
 'use server';
 
 import prisma from "@/lib/prisma";
 import { Role } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
-// Definimos el tipo de mensaje para que TypeScript no titubee
 export type OrderMessageItem = {
   id: string;
   orderId: string;
-  sender: Role;
-  message: string;
+  sender: string;
+  content: string;
+  read: boolean;
   createdAt: Date;
 };
 
@@ -16,14 +18,12 @@ type ActionResult =
   | { ok: false; error: string }
   | { ok: true; newMessage: OrderMessageItem };
 
-// Enviar un mensaje nuevo (sirve tanto para el Admin como para el Usuario)
 export const addOrderMessage = async (orderId: string, userId: string, message: string, senderRole: Role): Promise<ActionResult> => {
   try {
     if (!message.trim()) {
       return { ok: false, error: "El mensaje no puede estar vacío." };
     }
 
-    // Validar que la orden pertenezca al usuario (si es cliente) o que exista (si es admin)
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       select: { userId: true }
@@ -37,13 +37,20 @@ export const addOrderMessage = async (orderId: string, userId: string, message: 
       return { ok: false, error: "No tienes permiso para escribir en esta orden." };
     }
 
-    const newMessage = await prisma.orderMessage.create({
+    const newMessage = await prisma.message.create({
       data: {
         orderId,
         sender: senderRole,
-        message: message.trim(),
+        content: message.trim(),
+        read: false, // Por defecto no leído
       }
     });
+
+    // 🚀 Revalidación eficiente para refrescar listados y contadores de alertas al instante
+    revalidatePath('/orders');
+    revalidatePath('/admin/orders');
+    revalidatePath(`/orders/${orderId}`);
+    revalidatePath(`/admin/orders/${orderId}`);
 
     return { ok: true, newMessage };
   } catch (error) {
@@ -52,10 +59,9 @@ export const addOrderMessage = async (orderId: string, userId: string, message: 
   }
 };
 
-// Obtener todos los mensajes de una orden específica
 export const getOrderMessages = async (orderId: string) => {
   try {
-    const messages = await prisma.orderMessage.findMany({
+    const messages = await prisma.message.findMany({
       where: { orderId },
       orderBy: { createdAt: 'asc' }
     });
@@ -64,5 +70,34 @@ export const getOrderMessages = async (orderId: string) => {
   } catch (error) {
     console.error("❌ Error al obtener mensajes:", error);
     return { ok: false, messages: [], message: "Error al cargar la bitácora." };
+  }
+};
+
+// Marca como leídos los mensajes del bando contrario y actualiza las rutas
+export const markMessagesAsRead = async (orderId: string, readerRole: Role) => {
+  try {
+    const senderToMark = readerRole === 'ADMIN' ? 'USER' : 'ADMIN';
+
+    await prisma.message.updateMany({
+      where: {
+        orderId,
+        sender: senderToMark,
+        read: false,
+      },
+      data: {
+        read: true,
+      },
+    });
+
+    // 🚀 Revalidamos también aquí para que al entrar a ver los mensajes las alertas desaparezcan limpio
+    revalidatePath('/orders');
+    revalidatePath('/admin/orders');
+    revalidatePath(`/orders/${orderId}`);
+    revalidatePath(`/admin/orders/${orderId}`);
+
+    return { ok: true };
+  } catch (error) {
+    console.error("❌ Error al marcar mensajes como leídos:", error);
+    return { ok: false };
   }
 };

@@ -1,8 +1,9 @@
-// src/auth.ts
+// src/lib/auth.ts
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
+import { Role } from "@prisma/client"; // 👈 Importamos el tipo Role de Prisma
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -31,12 +32,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Contraseña incorrecta.");
         }
 
-        // TypeScript ahora sabe que user contiene 'role' gracias al archivo .d.ts
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: user.role, // Prisma lo infiere correctamente
         };
       }
     })
@@ -45,14 +45,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role; // Ya no requiere castear a 'any'
+        token.role = user.role as Role; // 👈 Tipado estricto
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id;   // Ya no requiere castear a 'any'
-        session.user.role = token.role; // Ya no requiere castear a 'any'
+        session.user.id = token.id as string;
+        session.user.role = token.role as Role; // 👈 Sin 'any', usando el enum Role
       }
       return session;
     }
@@ -62,6 +62,17 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

@@ -3,26 +3,45 @@ import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
 import { OrderStatus } from '@prisma/client';
+import OrderChat from '@/app/components/orders/OrderChat';
+import { getOrderMessages } from '@/actions/order-messages-actions';
+
+
+export const dynamic = 'force-dynamic';
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
-  // 1. Resolvemos la promesa de los params de forma segura
+  // 1. Resolvemos params
   const resolvedParams = await params;
   const orderId = resolvedParams.id;
 
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-  });
+  // 2. BUSQUEDA DE ORDEN Y MARCA DE LEÍDOS AUTOMÁTICA
+  // Realizamos dos consultas: una para obtener la orden y otra para actualizar los mensajes del usuario a 'read: true'
+  const [order] = await Promise.all([
+    prisma.order.findUnique({ where: { id: orderId } }),
+    prisma.message.updateMany({
+      where: {
+        orderId: orderId,
+        sender: 'USER',
+        read: false,
+      },
+      data: { read: true },
+    })
+  ]);
 
   if (!order) notFound();
+
+  // 3. Obtenemos los mensajes
+  const messagesResponse = await getOrderMessages(orderId);
+  const messages = messagesResponse.ok ? messagesResponse.messages : [];
 
   const discount = order.discount ?? 0;
   const finalTotal = Number(order.total ?? 0);
 
-  // Server Action para actualizar el estado utilizando el id ya resuelto
+  // Server Action para actualizar el estado
   async function changeStatusAction(formData: FormData) {
     'use server';
 
@@ -63,7 +82,6 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             🪵 Especificaciones del Pedido
           </h2>
           
-          {/* Desglose Monetario */}
           <div className="border-t-2 border-dashed border-stone-200 pt-4 space-y-2 max-w-xs ml-auto text-[11px] font-semibold text-stone-500 font-sans">
             <div className="flex justify-between">
               <span>Costo Logístico</span>
@@ -82,7 +100,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           </div>
         </div>
 
-        {/* COLUMNA DERECHA: Control de estados y Logística */}
+        {/* COLUMNA DERECHA: Control de estados */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-[#1C1816] text-[#FFF9F2] p-6 rounded-2xl border-2 border-stone-800 shadow-md space-y-4">
             <h3 className="text-xs font-black uppercase tracking-widest text-[#FFC107] border-b border-stone-800 pb-3">
@@ -117,26 +135,16 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               </button>
             </form>
           </div>
-
-          {/* Datos del Cliente y Despacho */}
-          <div className="bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-xs space-y-4">
-            <h2 className="text-[11px] font-black uppercase tracking-wider text-[#1C1816] border-b pb-2 border-stone-100">
-              🚚 Logística de Despacho
-            </h2>
-            <div className="space-y-3 text-xs">
-              <div>
-                <span className="text-stone-400 block text-[9px] uppercase font-bold">Destinatario</span>
-                <span className="font-bold text-stone-800">{order.firstName} {order.lastName}</span>
-              </div>
-              <div>
-                <span className="text-stone-400 block text-[9px] uppercase font-bold">Contacto Directo</span>
-                <span className="font-medium text-stone-700 block select-all">{order.email}</span>
-                <span className="font-medium text-stone-700 block">Tel: {order.phone}</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* Chat */}
+      <OrderChat 
+        orderId={order.id} 
+        userId={order.userId} 
+        initialMessages={messages} 
+        currentUserRole="ADMIN"
+      />
     </div>
   );
 }

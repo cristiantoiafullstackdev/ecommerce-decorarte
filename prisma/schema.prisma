@@ -102,7 +102,7 @@ model Order {
   updatedAt     DateTime      @updatedAt
   
   // Feedback de estados de ordenes a usuarios
-  messages  OrderMessage[]
+  messages  Message[]
 }
 model OrderItem {
   id        String  @id @default(cuid())
@@ -167,12 +167,13 @@ model PasswordResetToken {
   @@unique([email, token])
 }
 
-model OrderMessage {
-  id        String   @id @default(cuid())
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+model Message {
+  id        String   @id @default(uuid())
   orderId   String
-  sender    Role     // ADMIN o USER (para saber quién escribió el mensaje)
-  message   String   // El texto del mensaje o nota del estado
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sender    String   // "USER" o "ADMIN"
+  content   String
+  read      Boolean  @default(false) // <--- NUEVO CAMPO
   createdAt DateTime @default(now())
 }
 

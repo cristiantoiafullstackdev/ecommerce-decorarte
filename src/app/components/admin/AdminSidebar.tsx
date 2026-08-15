@@ -51,7 +51,6 @@ export default function AdminSidebar() {
         {/* Enlace clave para ir al Shop a revisar stock/visualización */}
         <Link
           href="/"
-          target="_blank"
           className="flex items-center justify-between px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
         >
           <span>Ver Shop Público</span>

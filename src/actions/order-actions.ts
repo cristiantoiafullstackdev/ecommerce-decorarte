@@ -5,6 +5,7 @@
 import prisma from "@/lib/prisma";
 import { PaymentMethod } from "@prisma/client";     
 import { getShippingCosts } from "./settings-actions";
+import { revalidatePath } from "next/cache";
 
 interface OrderItemInput {
   productId: string;
@@ -28,6 +29,10 @@ interface OrderInput {
 }
 
 export const createOrder = async (orderData: OrderInput) => {
+  console.log("📦 Datos recibidos en createOrder:", orderData);
+  console.log("🛒 Items en la orden:", orderData.items);
+  console.log("💳 Método de pago seleccionado:", orderData.paymentMethod);
+
   try {
     const { items, userId, paymentMethod, ...shippingData } = orderData;
     
@@ -136,6 +141,7 @@ export const createOrder = async (orderData: OrderInput) => {
       message: message || "Ocurrió un error interno en el servidor."
     };
   }
+  revalidatePath('/', 'page')
 };
 
 export const getOrdersByUser = async (userId: string) => {
@@ -170,3 +176,28 @@ export const getOrdersByUser = async (userId: string) => {
     return { ok: false, message: 'No se pudieron cargar las compras' };
   }
 };
+
+// Obtener la cantidad de órdenes con mensajes pendientes del usuario
+export async function getPendingOrdersCount() {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    // Contamos las órdenes cuyo último mensaje fue enviado por el usuario
+    const pendingCount = orders.filter((order) => {
+      const lastMsg = order.messages[0];
+      return lastMsg && lastMsg.sender === 'USER';
+    }).length;
+
+    return { ok: true, count: pendingCount };
+  } catch (error) {
+    console.error("Error al contar órdenes pendientes:", error);
+    return { ok: false, count: 0 };
+  }
+}

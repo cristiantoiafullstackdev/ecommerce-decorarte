@@ -1,4 +1,4 @@
-//src/app/(shop)/checkout/orders/[id]/page.tsx
+// src/app/(shop)/checkout/orders/[id]/page.tsx
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -20,6 +20,16 @@ export default async function OrderDetailsPage({ params }: Props) {
     notFound();
   }
 
+  // 💬 Marcar automáticamente como leídos los mensajes del ADMIN cuando el cliente abre su orden
+  await prisma.message.updateMany({
+    where: {
+      orderId: id,
+      sender: 'ADMIN',
+      read: false,
+    },
+    data: { read: true },
+  });
+
   // Consultamos la orden y sus items
   const order = await prisma.order.findUnique({
     where: { id },
@@ -37,20 +47,14 @@ export default async function OrderDetailsPage({ params }: Props) {
   }
 
   // 1. CÁLCULO MATEMÁTICO EXACTO Y TRANSPARENTE
-  // Subtotal puro de los productos solicitados
   const productsSubtotal = order.items.reduce(
     (acc, item) => acc + Number(item.price) * item.quantity, 
     0
   );
 
-  // Verificamos si es transferencia para aplicar el 10% SOLO sobre los productos
   const isTransfer = String(order.paymentMethod).toLowerCase() === 'transferencia';
   const discount = isTransfer ? Math.round(productsSubtotal * 0.10) : 0;
-
-  // El costo de envío guardado en la orden (o calculado)
   const shippingCost = Number(order.shipping) || 0;
-
-  // Total final verificado: (Subtotal - Descuento) + Envío
   const verifiedTotal = (productsSubtotal - discount) + shippingCost;
 
   const { messages } = await getOrderMessages(id);
@@ -75,7 +79,13 @@ export default async function OrderDetailsPage({ params }: Props) {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-center gap-3">
+            <Link 
+              href="/orders"
+              className="px-5 py-2.5 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+            >
+              Volver a Mis Compras
+            </Link>
             <span className="text-xs font-black uppercase text-stone-400 tracking-wider">Estado:</span>
             {order.status === 'PAID' ? (
               <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-black px-4 py-2 rounded-xl uppercase tracking-wider">
@@ -125,13 +135,11 @@ export default async function OrderDetailsPage({ params }: Props) {
             {/* Desglose de precios transparente y amigable */}
             <div className="border-t-2 border-stone-200 pt-4 space-y-2.5 text-xs font-semibold text-stone-600">
               
-              {/* Subtotal de piezas */}
               <div className="flex justify-between">
                 <span>Subtotal de Piezas</span>
                 <span className="font-bold text-[#1C1816]">${productsSubtotal.toLocaleString('es-AR')}</span>
               </div>
 
-              {/* Costo de Envío */}
               <div className="flex justify-between">
                 <span>Costo de Envío Logístico</span>
                 <span className="font-bold text-[#1C1816]">
@@ -139,7 +147,6 @@ export default async function OrderDetailsPage({ params }: Props) {
                 </span>
               </div>
 
-              {/* Beneficio Transferencia */}
               {discount > 0 && (
                 <div className="flex justify-between text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 font-bold text-[11px]">
                   <span>Beneficio 10% Transferencia Bancaria</span>
@@ -147,7 +154,6 @@ export default async function OrderDetailsPage({ params }: Props) {
                 </div>
               )}
 
-              {/* Total Final */}
               <div className="border-t border-stone-200 pt-3 flex justify-between text-base font-black text-[#1C1816]">
                 <span>Total de la Orden</span>
                 <span className="text-lg font-black text-[#B57C38]">${verifiedTotal.toLocaleString('es-AR')}</span>
@@ -212,7 +218,7 @@ export default async function OrderDetailsPage({ params }: Props) {
            userId={order.userId} 
            initialMessages={messages || []} 
          />
-      </div>         
+      </div>        
 
     </main>
   );
