@@ -1,4 +1,5 @@
 // src/app/(shop)/orders/page.tsx
+
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
@@ -8,8 +9,6 @@ import { GameStyles } from '@/app/components/iconos/DecorArteBrand';
 import { OrderStatus } from '@prisma/client';
 import prisma from '@/lib/prisma';
 
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
 
 function getOrderStatusBadge(status: OrderStatus) {
   switch (status) {
@@ -45,18 +44,11 @@ export default async function OrdersPage() {
           product: true,
         },
       },
-      messages: {
-        where: { sender: 'ADMIN', read: false }, // 👈 Solo traemos mensajes no leídos del taller
-        orderBy: { createdAt: 'desc' },
-        take: 1,
-      },
     },
   });
 
   const hasOrders = orders.length > 0;
-
-  const pendingMessagesCount = orders.filter(order => order.messages.length > 0).length;
-
+  
   return (
     <main className="min-h-screen bg-[#F5F2EB] pt-36 pb-20 px-4 md:px-8">
       <GameStyles />
@@ -67,11 +59,6 @@ export default async function OrdersPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-xl sm:text-2xl font-black text-[#1C1816] uppercase tracking-wider">Mis Compras</h1>
-              {pendingMessagesCount > 0 && (
-                <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-md animate-pulse">
-                  {pendingMessagesCount} {pendingMessagesCount === 1 ? 'mensaje nuevo del taller' : 'mensajes nuevos del taller'}
-                </span>
-              )}
             </div>
             <p className="text-xs text-stone-500 uppercase tracking-widest mt-1">Historial y seguimiento de tus pedidos en taller</p>
           </div>
@@ -98,23 +85,11 @@ export default async function OrdersPage() {
         ) : (
           <div className="space-y-6">
             {orders.map((order) => {
-              const hasNewMessageFromAdmin = order.messages.length > 0;
-
               return (
                 <div 
                   key={order.id} 
-                  className={`relative bg-[#FCF9F5] border-2 rounded-2xl p-6 shadow-sm flex flex-col gap-5 transition-all ${
-                    hasNewMessageFromAdmin ? 'border-red-500 bg-red-50/20' : 'border-stone-200'
-                  }`}
-                >
-                  
-                  {/* Aviso de mensaje nuevo flotante */}
-                  {hasNewMessageFromAdmin && (
-                    <div className="absolute -top-3 right-6 bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md uppercase tracking-wider animate-bounce flex items-center gap-1.5 border border-white">
-                      <span>💬 ¡Nuevo mensaje del taller!</span>
-                    </div>
-                  )}
-
+                  className="relative bg-[#FCF9F5] border-2 rounded-2xl p-6 shadow-sm flex flex-col gap-5 transition-all"
+                >           
                   {/* Cabecera de la Orden */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-4 border-b border-stone-200">
                     <div>
@@ -172,13 +147,9 @@ export default async function OrdersPage() {
                   <div className="pt-2 flex justify-end">
                     <Link
                       href={`/checkout/orders/${order.id}`}
-                      className={`w-full sm:w-auto text-center px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 ${
-                        hasNewMessageFromAdmin 
-                          ? 'bg-red-600 hover:bg-red-700 text-white shadow-md' 
-                          : 'bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white'
-                      }`}
+                      className="w-full sm:w-auto text-center px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2"
                     >
-                      <span>{hasNewMessageFromAdmin ? '💬 Ver respuesta del taller' : '💬 Ver Detalle y Chatear con el Taller'}</span>
+                      <span>Ver Detalle</span>
                     </Link>
                   </div>
 

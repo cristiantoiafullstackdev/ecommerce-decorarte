@@ -3,12 +3,6 @@ import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
 import { OrderStatus } from '@prisma/client';
-import OrderChat from '@/app/components/orders/OrderChat';
-import { getOrderMessages } from '@/actions/order-messages-actions';
-
-
-export const dynamic = 'force-dynamic';
-
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -22,21 +16,9 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   // Realizamos dos consultas: una para obtener la orden y otra para actualizar los mensajes del usuario a 'read: true'
   const [order] = await Promise.all([
     prisma.order.findUnique({ where: { id: orderId } }),
-    prisma.message.updateMany({
-      where: {
-        orderId: orderId,
-        sender: 'USER',
-        read: false,
-      },
-      data: { read: true },
-    })
   ]);
 
   if (!order) notFound();
-
-  // 3. Obtenemos los mensajes
-  const messagesResponse = await getOrderMessages(orderId);
-  const messages = messagesResponse.ok ? messagesResponse.messages : [];
 
   const discount = order.discount ?? 0;
   const finalTotal = Number(order.total ?? 0);
@@ -137,14 +119,6 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           </div>
         </div>
       </div>
-
-      {/* Chat */}
-      <OrderChat 
-        orderId={order.id} 
-        userId={order.userId} 
-        initialMessages={messages} 
-        currentUserRole="ADMIN"
-      />
     </div>
   );
 }

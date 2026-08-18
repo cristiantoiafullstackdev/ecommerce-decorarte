@@ -1,13 +1,10 @@
 // src/app/(shop)/checkout/orders/[id]/page.tsx
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { DecorarteIsotype, GameStyles } from '@/app/components/iconos/DecorArteBrand';
-import OrderChat from '@/app/components/orders/OrderChat'; 
-import { getOrderMessages } from '@/actions/order-messages-actions';
-
-export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -19,16 +16,6 @@ export default async function OrderDetailsPage({ params }: Props) {
   if (!id || id === 'undefined') {
     notFound();
   }
-
-  // 💬 Marcar automáticamente como leídos los mensajes del ADMIN cuando el cliente abre su orden
-  await prisma.message.updateMany({
-    where: {
-      orderId: id,
-      sender: 'ADMIN',
-      read: false,
-    },
-    data: { read: true },
-  });
 
   // Consultamos la orden y sus items
   const order = await prisma.order.findUnique({
@@ -56,8 +43,6 @@ export default async function OrderDetailsPage({ params }: Props) {
   const discount = isTransfer ? Math.round(productsSubtotal * 0.10) : 0;
   const shippingCost = Number(order.shipping) || 0;
   const verifiedTotal = (productsSubtotal - discount) + shippingCost;
-
-  const { messages } = await getOrderMessages(id);
 
   return (
     <main className="min-h-screen bg-[#F5F2EB] pt-36 pb-20 px-4 md:px-8">
@@ -132,7 +117,7 @@ export default async function OrderDetailsPage({ params }: Props) {
               ))}
             </div>
 
-            {/* Desglose de precios transparente y amigable */}
+            {/* Desglose de precios*/}
             <div className="border-t-2 border-stone-200 pt-4 space-y-2.5 text-xs font-semibold text-stone-600">
               
               <div className="flex justify-between">
@@ -203,23 +188,8 @@ export default async function OrderDetailsPage({ params }: Props) {
               Volver a la Tienda
             </Link>
           </div>
-
         </div>
-
-      </div>
-
-      {/* SECCIÓN DE COMUNICACIÓN CON EL TALLER */}
-      <div className="max-w-4xl mx-auto bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-sm mt-8">
-         <h3 className="text-xs font-black text-[#1C1816] uppercase tracking-widest mb-6 pb-3 border-b border-stone-150">
-           Conversación con el Taller
-         </h3>
-         <OrderChat 
-           orderId={order.id} 
-           userId={order.userId} 
-           initialMessages={messages || []} 
-         />
-      </div>        
-
+      </div>     
     </main>
   );
 }

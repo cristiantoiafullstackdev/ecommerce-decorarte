@@ -8,9 +8,6 @@ import { GameStyles } from '@/app/components/iconos/DecorArteBrand';
 import { OrderStatus, Role } from '@prisma/client';
 import prisma from '@/lib/prisma';
 
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-
 function getOrderStatusBadge(status: OrderStatus) {
   switch (status) {
     case OrderStatus.PAID:
@@ -47,16 +44,10 @@ export default async function AdminOrdersPage() {
           product: true,
         },
       },
-      messages: {
-        where: { read: false, sender: 'USER' }, // 👈 El admin busca lo que mandó el cliente sin leer
-        orderBy: { createdAt: 'desc' },
-        take: 1,
-      },
     },
   });
 
   const hasOrders = orders.length > 0;
-  const pendingMessagesCount = orders.filter(order => order.messages.length > 0).length;
 
   return (
     <main className="min-h-screen bg-[#F5F2EB] pt-36 pb-20 px-4 md:px-8">
@@ -68,11 +59,7 @@ export default async function AdminOrdersPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-xl sm:text-2xl font-black text-[#1C1816] uppercase tracking-wider">Órdenes (clientes)</h1>
-              {pendingMessagesCount > 0 && (
-                <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-md animate-pulse">
-                  {pendingMessagesCount} {pendingMessagesCount === 1 ? 'Orden con Mensaje' : 'Ordenes con mensajes'}
-                </span>
-              )}
+
             </div>
             <p className="text-xs text-stone-500 uppercase tracking-widest mt-1">Gestión y comunicación con los compradores</p>
           </div>
@@ -93,22 +80,12 @@ export default async function AdminOrdersPage() {
         ) : (
           <div className="space-y-6">
             {orders.map((order) => {
-              const hasNewMessageFromClient = order.messages.length > 0;
 
               return (
                 <div 
                   key={order.id} 
-                  className={`relative bg-[#FCF9F5] border-2 rounded-2xl p-6 shadow-sm flex flex-col gap-5 transition-all ${
-                    hasNewMessageFromClient ? 'border-red-500 bg-red-50/20' : 'border-stone-200'
-                  }`}
-                >
-                  
-                  {/* Aviso flotante de mensaje nuevo del cliente */}
-                  {hasNewMessageFromClient && (
-                    <div className="absolute -top-3 right-6 bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md uppercase tracking-wider animate-bounce flex items-center gap-1.5 border border-white">
-                      <span>💬 ¡Mensaje nuevo del cliente!</span>
-                    </div>
-                  )}
+                  className="relative bg-[#FCF9F5] border-2 rounded-2xl p-6 shadow-sm flex flex-col gap-5 transition-all"
+                >                
 
                   {/* Cabecera de la Orden */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-4 border-b border-stone-200">
@@ -161,28 +138,13 @@ export default async function AdminOrdersPage() {
                       <span className="font-bold text-stone-800 uppercase text-[9px] block">Método de Pago:</span>
                       <span className="uppercase font-semibold">{order.paymentMethod}</span>
                     </div>
-                  </div>
-
-                  {/* Botón de gestión y chat del administrador (Asegúrate de que esta ruta apunte al detalle del admin, por ejemplo /admin/orders/[id]) */}
-                  <div className="pt-2 flex justify-end">
-                    <Link
-                      href={`/admin/orders/${order.id}`}
-                      className={`w-full sm:w-auto text-center px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 ${
-                        hasNewMessageFromClient 
-                          ? 'bg-red-600 hover:bg-red-700 text-white shadow-md' 
-                          : 'bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white'
-                      }`}
-                    >
-                      <span>{hasNewMessageFromClient ? '💬 Responder al Cliente' : '⚙️ Gestionar Orden y Chat'}</span>
-                    </Link>
-                  </div>
+                  </div>              
 
                 </div>
               );
             })}
           </div>
         )}
-
       </div>
     </main>
   );

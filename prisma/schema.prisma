@@ -100,9 +100,6 @@ model Order {
   
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  
-  // Feedback de estados de ordenes a usuarios
-  messages  Message[]
 }
 model OrderItem {
   id        String  @id @default(cuid())
@@ -166,17 +163,6 @@ model PasswordResetToken {
 
   @@unique([email, token])
 }
-
-model Message {
-  id        String   @id @default(uuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  sender    String   // "USER" o "ADMIN"
-  content   String
-  read      Boolean  @default(false) // <--- NUEVO CAMPO
-  createdAt DateTime @default(now())
-}
-
 model Setting {
   key   String @id
   value String
