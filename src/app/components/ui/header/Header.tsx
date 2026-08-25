@@ -57,6 +57,10 @@ export default function Header({ currentSection = "catalogo" }: HeaderProps) {
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  // Detecta de forma síncrona si ya estamos en el navegador
+  const [isMounted] = useState(() => typeof window !== 'undefined');
+
   
   // Referencias para manejar clics fuera de los menús flotantes
   const searchRef = useRef<HTMLDivElement>(null);
@@ -73,8 +77,8 @@ export default function Header({ currentSection = "catalogo" }: HeaderProps) {
   const hasHydratedWish = useWishlistStore((state) => state._hasHydrated);
   const wishCount = useWishlistStore((state) => state.getWishCount());
   const loadUserFavorites = useWishlistStore((state) => state.loadUserFavorites); // <--- 3. Traemos la función de carga de favorito
-  const displayWishCount = hasHydratedWish ? wishCount : 0;  
-  const displayItems = hasHydrated ? totalItems : 0;
+  const displayWishCount = isMounted && hasHydratedWish ? wishCount : 0;  
+  const displayItems = isMounted && hasHydrated ? totalItems : 0;
 
   // Efecto para cerrar menús al hacer clic fuera de ellos
   useEffect(() => {

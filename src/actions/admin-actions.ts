@@ -4,6 +4,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { OrderStatus } from "@prisma/client";
+import { sendOrderStatusEmail } from "@/lib/mail";
 
 // Definimos interfaces estrictas para evitar el uso de 'any'
 export interface AdminOrderProduct {
@@ -90,16 +91,20 @@ export async function getAdminOrders(): Promise<{ ok: boolean; orders: AdminOrde
 
 /**
  * Actualiza el estado de una orden específica de forma segura en Neon DB
+ * y dispara la notificación por correo al cliente de forma síncrona/controlada.
  */
 export async function updateOrderStatus(
   orderId: string,
   newStatus: OrderStatus
 ): Promise<{ ok: boolean; message: string }> {
   try {
-    await prisma.order.update({
+    const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
         status: newStatus,
+      },
+      select: {
+        email: true, 
       },
     });
 
@@ -113,8 +118,23 @@ export async function updateOrderStatus(
       CANCELLED: "CANCELADA"
     };
 
-    // Revalidamos los datos de las rutas afectadas para refrescar el taller
+    // Disparamos el correo esperando el resultado para capturar cualquier error directamente en consola
+    if (updatedOrder?.email) {
+      console.log(`📤 [Admin Action] Intentando enviar mail a: ${updatedOrder.email} para la orden ${orderId}`);
+      try {
+        await sendOrderStatusEmail(updatedOrder.email, orderId, newStatus);
+        console.log(`✅ [Admin Action] Correo procesado y enviado con éxito.`);
+      } catch (mailError) {
+        console.error("❌ [Admin Action] Error exacto al enviar el correo con Nodemailer:", mailError);
+      }
+    } else {
+      console.log("⚠️ La orden no tiene un email asociado.");
+    }
+
+    // Revalidamos los datos de las rutas afectadas para refrescar el panel
     revalidatePath("/admin");
+    revalidatePath("/admin/orders");
+    revalidatePath(`/admin/orders/${orderId}`);
     revalidatePath(`/checkout/orders/${orderId}`);
 
     return { 

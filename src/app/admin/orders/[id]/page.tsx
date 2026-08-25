@@ -3,6 +3,8 @@ import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
 import { OrderStatus } from '@prisma/client';
+import { sendOrderStatusEmail } from '@/lib/mail'; // <--- Importamos el servicio de correo
+
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -12,28 +14,42 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   const resolvedParams = await params;
   const orderId = resolvedParams.id;
 
-  // 2. BUSQUEDA DE ORDEN Y MARCA DE LEÍDOS AUTOMÁTICA
-  // Realizamos dos consultas: una para obtener la orden y otra para actualizar los mensajes del usuario a 'read: true'
-  const [order] = await Promise.all([
-    prisma.order.findUnique({ where: { id: orderId } }),
-  ]);
+  // 2. BUSQUEDA DE ORDEN
+  const order = await prisma.order.findUnique({ 
+    where: { id: orderId } 
+  });
 
   if (!order) notFound();
 
   const discount = order.discount ?? 0;
   const finalTotal = Number(order.total ?? 0);
 
-  // Server Action para actualizar el estado
+  // Server Action para actualizar el estado y enviar correo
   async function changeStatusAction(formData: FormData) {
     'use server';
 
-    const newStatus = formData.get('status');
+    if (!order) return;
 
-    if (newStatus && Object.values(OrderStatus).includes(newStatus as OrderStatus)) {
-      await prisma.order.update({
-        where: { id: orderId },
-        data: { status: newStatus as OrderStatus },
-      });
+    const newStatus = formData.get('status') as OrderStatus;
+
+    if (newStatus && Object.values(OrderStatus).includes(newStatus)) {
+      // Verificamos si el estado cambió realmente para no enviar correos innecesarios
+      if (order.status !== newStatus) {
+        // 1. Actualizamos en la base de datos
+        const updatedOrder = await prisma.order.update({
+          where: { id: orderId },
+          data: { status: newStatus },
+        });
+
+        // 2. Disparamos el correo electrónico si el usuario tiene un email registrado
+        if (updatedOrder?.email) {
+          await sendOrderStatusEmail(
+            updatedOrder.email,
+            updatedOrder.id,
+            updatedOrder.status
+          );
+        }
+      }
     }
 
     redirect(`/admin/orders/${orderId}`);

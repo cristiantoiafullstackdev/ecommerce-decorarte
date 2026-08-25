@@ -19,7 +19,10 @@ export default function CardProduct({ product }: CardProductProps) {
   const userId = session?.user?.id;       // <--- 3. Extraemos el id del usuario logueado
 
   const toggleFavorite = useWishlistStore((state) => state.toggleFavorite);
-  const isFavorite = useWishlistStore((state) => state.isFavorite(product.id));
+  const isFav = useWishlistStore((state) => state.isFavorite(product.id));
+  const _hasHydrated = useWishlistStore((state) => state._hasHydrated);
+  // Solo marcamos como favorito si Zustand ya cargó del localStorage
+  const isFavorite = _hasHydrated && isFav;
 
   const [imgError, setImgError] = useState(false);
   const addProductToCart = useCartStore((state) => state.addProductToCart);
