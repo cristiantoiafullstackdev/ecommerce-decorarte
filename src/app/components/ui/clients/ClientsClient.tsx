@@ -1,4 +1,4 @@
-// src/app/admin/clients/ui/ClientsClient.tsx
+// src/app/admin/clientes/ClientsClient.tsx
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -25,7 +25,6 @@ export default function ClientsClient({ initialClients }: ClientsClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('ALL');
 
-  // Lógica de filtrado en tiempo real
   const filteredClients = useMemo(() => {
     return initialClients.filter((client) => {
       const matchesSearch = 
@@ -48,7 +47,7 @@ export default function ClientsClient({ initialClients }: ClientsClientProps) {
             placeholder="Buscar por nombre o email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border-2 border-stone-200 bg-[#FCF9F5] text-xs font-medium focus:outline-none focus:border-[#1C1816]"
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-stone-200 bg-[#FCF9F5] text-xs font-medium focus:outline-none focus:border-[#1C1816] text-stone-900"
           />
         </div>
 

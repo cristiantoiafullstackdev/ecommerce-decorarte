@@ -1,15 +1,13 @@
 //src/app/components/ui/header/Header.tsx
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { searchProducts } from '@/actions/product-actions';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { 
   DecorarteLogo, 
   DecorarteIsotype, 
-  DecorarteSearchIcon, 
   DecorarteHeartIcon, 
   DecorarteBagIcon, 
   DecorarteUserIcon,
@@ -18,23 +16,7 @@ import {
 import { useCartStore } from '@/store/cart/cart-store';
 import SidebarCart from '@/app/components/cart/SidebarCart';
 import { useWishlistStore } from '@/store/wishlist/wishlist-store';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
-interface HeaderProps {
-  currentSection?: string;
-  wishCout?: number;
-}
-
-interface SearchProduct {
-  id: string;
-  title: string;
-  slug: string;
-  images: string[];
-  price: number;
-}
-
-// Extensión segura para la propiedad role del usuario en NextAuth
 interface ExtendedUser {
   id?: string;
   name?: string | null;
@@ -47,47 +29,53 @@ interface ExtendedSession {
   user?: ExtendedUser;
 }
 
-export default function Header({ currentSection = "catalogo" }: HeaderProps) {
+/**
+ * ============================================================================
+ * HEADER COMPONENT (CLIENT)
+ * Detecta la ruta automáticamente para el estado activo y gestiona la UI.
+ * ============================================================================
+ */
+export default function Header() {
   const router = useRouter();
+  const pathname = usePathname(); // <-- Detección automática de la ruta activa
 
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchProduct[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
+  // Estados locales para la UI
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Detecta de forma síncrona si ya estamos en el navegador
+  // Control de hidratación segura para evitar errores de SSR en Zustand
   const [isMounted] = useState(() => typeof window !== 'undefined');
 
-  
-  // Referencias para manejar clics fuera de los menús flotantes
-  const searchRef = useRef<HTMLDivElement>(null);
+  // Referencias para manejo de clics fuera de los elementos flotantes
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   
+  // Gestión de sesión mediante NextAuth
   const { data: session, status } = useSession() as { data: ExtendedSession | null; status: string };
   const isAuthenticated = status === "authenticated";
-  const userId = session?.user?.id; // <--- 1. Extraemos el id del usuario actual
+  const userId = session?.user?.id;
 
+  // Stores globales de Zustand
   const hasHydrated = useCartStore((state) => state._hasHydrated);
   const totalItems = useCartStore((state) => state.getTotalItems());
-  const loadUserCart = useCartStore((state) => state.loadUserCart); // <--- 2. Traemos la función de carga del carrito
+  const loadUserCart = useCartStore((state) => state.loadUserCart);
 
   const hasHydratedWish = useWishlistStore((state) => state._hasHydrated);
   const wishCount = useWishlistStore((state) => state.getWishCount());
-  const loadUserFavorites = useWishlistStore((state) => state.loadUserFavorites); // <--- 3. Traemos la función de carga de favorito
+  const loadUserFavorites = useWishlistStore((state) => state.loadUserFavorites);
+  
   const displayWishCount = isMounted && hasHydratedWish ? wishCount : 0;  
   const displayItems = isMounted && hasHydrated ? totalItems : 0;
 
-  // Efecto para cerrar menús al hacer clic fuera de ellos
+  // Efecto para cerrar modales y menús flotantes al hacer clic fuera de ellos
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsSearchOpen(false);
-      }
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
       }
     };
 
@@ -97,42 +85,16 @@ export default function Header({ currentSection = "catalogo" }: HeaderProps) {
     };
   }, []);
 
-  // Efecto para buscar en tiempo real con debounce
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (searchQuery.trim().length > 1) {
-        setIsLoading(true);
-        const results = await searchProducts(searchQuery);
-        setSearchResults(results);
-        setIsLoading(false);
-      } else {
-        setSearchResults([]);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const toggleSearch = () => {
-    setIsSearchOpen(!isSearchOpen);
-    if (!isSearchOpen) {
-      setSearchQuery('');
-      setSearchResults([]);
-    }
-  };
-
   const handleWishlist = () => {
     router.push('/favorites');
   };
 
-  // 4. EL PUENTE DE SINCRONIZACIÓN AUTOMÁTICA
+  // Sincronización automática de carritos y favoritos según autenticación
   useEffect(() => {
     if (isAuthenticated && userId) {
-      // Si hay un usuario logueado, traemos sus datos reales de la BD
       loadUserCart(userId);
       loadUserFavorites(userId);
     } else if (status === "unauthenticated") {
-      // Si cerró sesión o no hay nadie, limpiamos la memoria visual local
       useCartStore.getState().clearCart();
       useWishlistStore.getState().clearWishlist();
     }
@@ -142,203 +104,139 @@ export default function Header({ currentSection = "catalogo" }: HeaderProps) {
     <>
       <GameStyles />
 
-      {/* Contenedor Fijo Superior */}
-      <nav className="fixed top-0 w-full bg-[#EAE6DC]/90 backdrop-blur-md border-b border-stone-200/80 shadow-sm transition-all z-50">
-        <div className="max-w-7xl mx-auto px-6 h-32 flex items-center justify-between">
+      {/* Barra de navegación principal fija superior */}
+      <nav className="fixed top-0 w-full bg-(--iron-dark)/95 backdrop-blur-md border-b border-(--iron-medium) shadow-lg transition-all z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 lg:h-32 flex items-center justify-between gap-4">
           
-          {/* 1. SECCIÓN DE LOGO RESPONSIVO */}
-          <Link href="/" className="shrink-0 flex items-center cursor-pointer">
-            <div className="hidden md:block">
-              <DecorarteLogo height={96} />
+          {/* ==================================================================
+             1. LOGOTIPO A LA IZQUIERDA
+             ================================================================== */}
+          <Link href="/" className="flex items-center cursor-pointer shrink-0">
+            <div className="hidden sm:block">
+              <DecorarteLogo height={60} />
             </div>
-            <div className="block md:hidden">
-              <DecorarteIsotype size={56} />
+            <div className="block sm:hidden">
+              <DecorarteIsotype size={40} />
             </div>
           </Link>
 
-          {/* 2. ENLACES DE NAVEGACIÓN EN LINEA */}
-          <div className="hidden lg:flex items-center space-x-10">
-            <Link href="/" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "catalogo" ? "game-link-active" : ""}`}>
+          {/* ==================================================================
+             2. NAVEGACIÓN CENTRAL (Escritorio Lg+) con validación por pathname
+             ================================================================== */}
+          <div className="hidden lg:flex items-center space-x-8 shrink-0">
+            <Link 
+              href="/" 
+              className={`game-link text-xs uppercase tracking-[0.2em] font-bold transition-colors ${
+                pathname === "/" 
+                  ? "game-link-active text-(--accent-gold) font-black border-b-2 border-(--accent-gold) pb-1" 
+                  : "text-stone-300 hover:text-(--accent-gold)"
+              }`}
+            >
               Catálogo
             </Link>
-            <Link href="/nosotros" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "nosotros" ? "game-link-active" : ""}`}>
+            <Link 
+              href="/nosotros" 
+              className={`game-link text-xs uppercase tracking-[0.2em] font-bold transition-colors ${
+                pathname === "/nosotros" 
+                  ? "game-link-active text-(--accent-gold) font-black border-b-2 border-(--accent-gold) pb-1" 
+                  : "text-stone-300 hover:text-(--accent-gold)"
+              }`}
+            >
               Nosotros
             </Link>
-            <Link href="/contacto" className={`game-link text-sm uppercase tracking-[0.2em] font-bold text-stone-800 ${currentSection === "contacto" ? "game-link-active" : ""}`}>
+            <Link 
+              href="/contacto" 
+              className={`game-link text-xs uppercase tracking-[0.2em] font-bold transition-colors ${
+                pathname === "/contacto" 
+                  ? "game-link-active text-(--accent-gold) font-black border-b-2 border-(--accent-gold) pb-1" 
+                  : "text-stone-300 hover:text-(--accent-gold)"
+              }`}
+            >
               Contacto
             </Link>
           </div>
 
-          {/* 3. CONTROLES CON BOTONES COMPACTOS */}
-          <div className="flex items-center space-x-6">
+          {/* ==================================================================
+             3. CONTROLES DE ACCESO RÁPIDO (Zona Derecha)
+             ================================================================== */}
+          <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
 
-            {/* BOTÓN DEL BUSCAR (LUPA) */}
-            <div className="relative flex items-center" ref={searchRef}>
-              <button onClick={toggleSearch} className="focus:outline-none p-1 game-bounce text-stone-800 hover:text-[#C84B31] transition-colors" aria-label="Buscar">
-                <DecorarteSearchIcon size={36} />
-              </button>
-
-              {/* Panel Desplegable de Búsqueda Predictiva Rediseñado */}
-              {isSearchOpen && (
-                <div className="absolute right-0 top-14 w-80 sm:w-96 bg-[#FCF9F5] p-4 rounded-2xl border-2 border-stone-300 shadow-2xl z-50 flex flex-col gap-3 animate-fadeIn">
-                  <div className="relative">
-                    <input 
-                      type="text"
-                      placeholder="¿Qué estás buscando hoy?"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      autoFocus
-                      className="w-full bg-white px-4 py-2.5 text-xs font-bold text-stone-800 rounded-xl border border-stone-200 shadow-inner focus:outline-none focus:border-[#C84B31] tracking-wide"
-                    />
-                    {searchQuery && (
-                      <button 
-                        onClick={() => setSearchQuery('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 text-xs font-bold"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Lista de resultados */}
-                  <div className="max-h-72 overflow-y-auto flex flex-col gap-1.5 pr-1">
-                    {isLoading && (
-                      <div className="py-6 text-center">
-                        <span className="inline-block w-5 h-5 border-2 border-[#C84B31] border-t-transparent rounded-full animate-spin"></span>
-                        <p className="text-[10px] text-stone-400 mt-2 uppercase tracking-widest font-black">Buscando tesoros...</p>
-                      </div>
-                    )}
-
-                    {!isLoading && searchQuery.trim().length > 1 && searchResults.length === 0 && (
-                      <div className="py-8 text-center flex flex-col items-center gap-1">
-                        <span className="text-2xl">🔍</span>
-                        <p className="text-xs font-bold text-stone-700 uppercase tracking-tight">Sin resultados</p>
-                        <p className="text-[10px] text-stone-400">Prueba con otra palabra clave</p>
-                      </div>
-                    )}
-
-                    {!isLoading && searchQuery.trim().length <= 1 && (
-                      <div className="py-4 text-center">
-                        <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold">Escribe al menos 2 letras</p>
-                      </div>
-                    )}
-
-                    {searchResults.map((product) => (
-                      <Link
-                        key={product.id}
-                        href={`/product/${product.slug}`}
-                        onClick={() => {
-                          setIsSearchOpen(false);
-                          setSearchQuery('');
-                        }}
-                        className="flex items-center gap-3 p-2 bg-white/60 hover:bg-white rounded-xl border border-stone-200/80 hover:border-[#C84B31]/40 transition-all shadow-sm group"
-                      >
-                        {/* Miniatura */}
-                        <div className="w-12 h-12 relative rounded-lg overflow-hidden bg-stone-100 shrink-0 border border-stone-200">
-                          <Image 
-                            src={product.images[0] ? (product.images[0].startsWith('http') ? product.images[0] : `/products/${product.images[0]}`) : '/placeholder.jpg'} 
-                            alt={product.title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                        
-                        {/* Info */}
-                        <div className="flex flex-col overflow-hidden flex-1">
-                          <span className="text-xs font-black text-stone-800 truncate uppercase tracking-tight group-hover:text-[#C84B31] transition-colors">
-                            {product.title}
-                          </span>
-                          <span className="text-xs font-bold text-[#C84B31] mt-0.5">
-                            ${Number(product.price).toLocaleString()}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* BOTÓN DE FAVORITOS */}
-            <button onClick={handleWishlist} className="focus:outline-none p-1 relative game-bounce" aria-label="Favoritos">
-              <DecorarteHeartIcon size={40} filled={displayWishCount > 0} />
+            {/* FAVORITOS */}
+            <button onClick={handleWishlist} className="focus:outline-none p-1.5 relative btn-decorarte" aria-label="Favoritos">
+              <DecorarteHeartIcon size={28} filled={displayWishCount > 0} />
               {displayWishCount > 0 && (
-                <span className="absolute -top-3 -right-1.5 bg-[#C84B31] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-stone-900 shadow">
+                <span className="absolute -top-2 -right-1 bg-(--accent-gold) text-(--iron-dark) text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-(--iron-dark) shadow">
                   {displayWishCount}
                 </span>
               )}
             </button>
 
-            {/* BOTÓN DEL CARRITO */}
+            {/* CARRITO */}
             <button 
               onClick={() => setIsCartOpen(true)} 
-              className="focus:outline-none p-1 relative game-bounce" 
+              className="focus:outline-none p-1.5 relative btn-decorarte" 
               aria-label="Carrito"
             >
-              <DecorarteBagIcon size={48} />
+              <DecorarteBagIcon size={32} />
               {displayItems > 0 && (
-                <span className="absolute -top-1 -right-1.5 bg-[#C84B31] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-stone-900 shadow">
+                <span className="absolute -top-1 -right-1 bg-(--accent-gold) text-(--iron-dark) text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-(--iron-dark) shadow">
                   {displayItems}
                 </span>
               )}
             </button>
 
-            {/* PERFIL DINÁMICO CONECTADO A NEXTAUTH */}
+            {/* PERFIL DE USUARIO */}
             <div className="relative" ref={profileMenuRef}>
               {isAuthenticated ? (
                 <button 
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                  className="focus:outline-none p-1 flex items-center gap-1 text-stone-800 font-bold uppercase tracking-wider text-[11px] game-bounce"
+                  className="focus:outline-none p-1.5 flex items-center gap-1.5 text-stone-200 font-bold text-[11px] btn-decorarte"
                 >
-                  <DecorarteUserIcon size={36} />
-                  <span className="hidden sm:inline text-stone-600 font-medium lowercase">
-                    hola, <span className="font-black uppercase text-stone-800 text-xs">{session?.user?.name?.split(" ")[0]}</span>
+                  <DecorarteUserIcon size={28} />
+                  <span className="hidden md:inline text-stone-400 font-medium lowercase">
+                    hola, <span className="font-black uppercase text-stone-100">{session?.user?.name?.split(" ")[0]}</span>
                   </span>
                 </button>
               ) : (
-                <Link href="/auth/login" className="focus:outline-none p-1 block game-bounce" aria-label="Iniciar Sesión">
-                  <DecorarteUserIcon size={36} />
+                <Link href="/auth/login" className="focus:outline-none p-1.5 block btn-decorarte" aria-label="Iniciar Sesión">
+                  <DecorarteUserIcon size={28} />
                 </Link>
               )}
 
-              {/* Menú Flotante Desplegable */}
               {isAuthenticated && isProfileMenuOpen && (
-                <div className="absolute right-0 mt-3 w-56 bg-[#FCF9F5] rounded-xl border-2 border-stone-200 shadow-xl py-2 z-50 flex flex-col font-bold uppercase text-[10px] tracking-widest text-stone-700 animate-fadeIn">
-                  <div className="px-4 py-2 border-b border-stone-200 text-stone-400 font-normal text-[9px] lowercase">
-                    Conectado como: <br /><span className="font-bold text-stone-600 normal-case text-xs">{session?.user?.email}</span>
+                <div className="absolute right-0 mt-3 w-56 bg-(--iron-dark) rounded-xl border-2 border-(--iron-medium) shadow-xl py-2 z-50 flex flex-col font-bold uppercase text-[10px] tracking-widest text-stone-200">
+                  <div className="px-4 py-2 border-b border-(--iron-medium) text-stone-400 font-normal text-[9px] lowercase">
+                    cuenta: <br /><span className="font-bold text-stone-200 normal-case text-xs">{session?.user?.email}</span>
                   </div>
 
                   {session?.user?.role === 'ADMIN' && (
                     <Link 
                       href="/admin" 
                       onClick={() => setIsProfileMenuOpen(false)}
-                      className="px-4 py-3 text-[#B57C38] hover:bg-amber-50 hover:text-[#1C1816] transition-colors border-b border-stone-100 font-black"
+                      className="px-4 py-3 text-(--accent-gold) hover:bg-(--iron-medium) transition-colors border-b border-(--iron-medium) font-black"
                     >
                       👑 Panel Administración
                     </Link>
                   )}
 
-                  <Link href="/orders" onClick={() => setIsProfileMenuOpen(false)} className="px-4 py-3 hover:bg-stone-100 text-stone-800 transition-colors">
+                  <Link href="/orders" onClick={() => setIsProfileMenuOpen(false)} className="px-4 py-3 hover:bg-(--iron-medium) transition-colors">
                     Mis Compras
                   </Link>
 
                   <button 
                     onClick={async () => {
                       setIsProfileMenuOpen(false);
-                      // 1. Limpiamos manualmente los stores de Zustand al instante
                       useCartStore.getState().clearCart();
                       useCartStore.getState().clearAddress();
                       useWishlistStore.getState().clearWishlist();
 
-                      // ⚠️ Forzamos limpiar el localStorage residual de Zustand de raíz
                       localStorage.removeItem('decorarte-shopping-cart');
-                      localStorage.removeItem('decorarte-wishlist'); // Si aplica para favoritos
+                      localStorage.removeItem('decorarte-wishlist');
                       
-                      // 2. Cerramos sesión y forzamos recarga total hacia la raíz
                       await signOut({ redirect: false });
                       window.location.href = '/';
                     }} 
-                    className="px-4 py-3 text-left hover:bg-red-50 text-red-600 border-t border-stone-200 transition-colors mt-1 font-black"
+                    className="px-4 py-3 text-left hover:bg-red-950/40 text-red-400 border-t border-(--iron-medium) transition-colors mt-1 font-black"
                   >
                     [ Cerrar Sesión ]
                   </button>
@@ -349,9 +247,80 @@ export default function Header({ currentSection = "catalogo" }: HeaderProps) {
           </div>
 
         </div>
+
+        {/* ==================================================================
+           4. BARRA INFERIOR MÓVIL
+           ================================================================== */}
+        <div className="lg:hidden w-full bg-(--iron-medium)/80 border-t border-(--iron-medium) py-1.5 px-4 flex justify-center items-center">
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="w-full max-w-xs py-1.5 rounded-lg bg-(--iron-dark) border border-(--iron-light) text-(--accent-gold) hover:bg-(--iron-light)/20 transition-all focus:outline-none shadow-sm flex items-center justify-center gap-2"
+            aria-label="Abrir Menú de Navegación"
+          >
+            {isMobileMenuOpen ? (
+              <>
+                <svg className="w-4 h-4 transform rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span className="text-[10px] font-black uppercase tracking-widest text-stone-300">Cerrar Menú</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+                <span className="text-[10px] font-black uppercase tracking-widest text-(--accent-gold)">Menú</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* ==================================================================
+           5. MENÚ MÓVIL DESPLEGABLE (Drawer) con validación automática por pathname
+           ================================================================== */}
+        {isMobileMenuOpen && (
+          <div ref={mobileMenuRef} className="lg:hidden bg-(--iron-dark) border-b-2 border-(--iron-medium) px-6 py-6 flex flex-col space-y-4 shadow-2xl animate-fadeIn">
+            <Link 
+              href="/" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`text-xs uppercase tracking-[0.2em] py-3 border-b border-(--iron-medium) flex items-center justify-between ${
+                pathname === "/" 
+                  ? "text-(--accent-gold) font-black bg-(--iron-medium)/30 px-3 rounded" 
+                  : "text-stone-300 font-bold"
+              }`}
+            >
+              <span>Catálogo</span>
+              <span className="text-[10px]">→</span>
+            </Link>
+            <Link 
+              href="/nosotros" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`text-xs uppercase tracking-[0.2em] py-3 border-b border-(--iron-medium) flex items-center justify-between ${
+                pathname === "/nosotros" 
+                  ? "text-(--accent-gold) font-black bg-(--iron-medium)/30 px-3 rounded" 
+                  : "text-stone-300 font-bold"
+              }`}
+            >
+              <span>Nosotros / Taller</span>
+              <span className="text-[10px]">→</span>
+            </Link>
+            <Link 
+              href="/contacto" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`text-xs uppercase tracking-[0.2em] py-3 flex items-center justify-between ${
+                pathname === "/contacto" 
+                  ? "text-(--accent-gold) font-black bg-(--iron-medium)/30 px-3 rounded" 
+                  : "text-stone-300 font-bold"
+              }`}
+            >
+              <span>Contacto</span>
+              <span className="text-[10px]">→</span>
+            </Link>
+          </div>
+        )}
       </nav>
 
-      {/* COMPONENTE SIDEBAR INYECTADO */}
+      {/* Componente lateral del Carrito */}
       <SidebarCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );

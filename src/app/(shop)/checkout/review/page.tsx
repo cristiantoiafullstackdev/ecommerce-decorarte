@@ -91,7 +91,7 @@ export default function ReviewPage() {
 
   if (status === "loading" || !hasHydrated) {
     return (
-      <div className="min-h-screen bg-[#F5F2EB] flex flex-col items-center justify-center text-center">
+      <div className="min-h-screen bg-[#F5F2EB] flex flex-col items-center justify-center text-center px-4">
         <div className="text-[#B57C38] animate-spin mb-4">
           <DecorarteIsotype size={40} />
         </div>
@@ -102,7 +102,7 @@ export default function ReviewPage() {
 
   if (hasHydrated && (!address || activeCart.length === 0)) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-6 pt-32 bg-[#F5F2EB]">
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 pt-32 bg-[#F5F2EB]">
         <div className="text-stone-400 mb-6">
           <DecorarteIsotype size={80} />
         </div>
@@ -116,16 +116,16 @@ export default function ReviewPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F2EB] pt-36 pb-20 px-4 md:px-8">
+    <main className="min-h-screen bg-[#F5F2EB] pt-32 pb-20 px-4 sm:px-6 md:px-8">
       <GameStyles />
       
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         
         {/* COLUMNA IZQUIERDA: Formularios y Selectores */}
-        <div className="lg:col-span-7 space-y-8">
+        <div className="lg:col-span-7 space-y-6 lg:space-y-8">
           
         {errorMessage && (
-            <div className="bg-red-50 border-2 border-red-200 text-red-800 rounded-xl p-5 space-y-3 shadow-xs">
+            <div className="bg-red-50 border-2 border-red-200 text-red-800 rounded-xl p-5 space-y-3 shadow-sm">
               <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider">
                 <span>⚠️ Atención en el Taller</span>
               </div>
@@ -145,7 +145,7 @@ export default function ReviewPage() {
           )}
 
           {/* Bloque Informativo: Resumen de Envío */}
-          <div className="bg-white p-6 md:p-10 rounded-2xl border-2 border-stone-200 shadow-sm space-y-6">
+          <div className="bg-white p-5 sm:p-8 md:p-10 rounded-2xl border-2 border-stone-200 shadow-sm space-y-6">
             <div>
               <span className="text-[10px] text-[#B57C38] uppercase tracking-widest font-black bg-[#E2DCD0] px-2.5 py-1 rounded-md">Paso 2 de 2</span>
               <h1 className="text-xl md:text-2xl font-black text-[#1C1816] uppercase tracking-tight mt-3">Verificá tu Orden</h1>
@@ -155,12 +155,12 @@ export default function ReviewPage() {
             <div className="border-t border-stone-200 pt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-xs font-black text-stone-400 uppercase tracking-widest mb-1">Destinatario</h3>
-                <p className="text-sm font-bold text-[#1C1816]">{address?.firstName ?? ''} {address?.lastName ?? ''}</p>
-                <p className="text-xs text-stone-600">{address?.email ?? ''} | Tel: {address?.phone ?? ''}</p>
+                <p className="text-sm font-bold text-[#1C1816] break-words">{address?.firstName ?? ''} {address?.lastName ?? ''}</p>
+                <p className="text-xs text-stone-600 break-all">{address?.email ?? ''} | Tel: {address?.phone ?? ''}</p>
               </div>
               <div>
                 <h3 className="text-xs font-black text-stone-400 uppercase tracking-widest mb-1">Despacho Logístico</h3>
-                <p className="text-sm font-medium text-stone-800">{address?.address ?? ''}</p>
+                <p className="text-sm font-medium text-stone-800 break-words">{address?.address ?? ''}</p>
                 <p className="text-xs text-stone-600">
                   {address?.city ?? ''}, {address?.province === 'cordoba' ? 'Córdoba' : (address?.province ?? '').toUpperCase()} (CP: {address?.zipCode ?? ''})
                 </p>
@@ -170,11 +170,11 @@ export default function ReviewPage() {
             {address?.notes && (
               <div className="bg-[#FCF9F5] p-4 rounded-xl border border-stone-200 text-xs text-stone-600">
                 <span className="block font-black text-[#B57C38] uppercase tracking-wider mb-1">Notas para el Taller:</span>
-                <p className="italic">&quot;{address.notes}&quot;</p>
+                <p className="italic break-words">&quot;{address.notes}&quot;</p>
               </div>
             )}
 
-            <div className="border-t border-stone-150 pt-4">
+            <div className="border-t border-stone-200 pt-4">
               <Link href="/checkout" className="text-xs font-bold text-[#B57C38] hover:underline uppercase tracking-wider">✏️ Modificar datos de envío</Link>
             </div>
           </div>
@@ -187,13 +187,13 @@ export default function ReviewPage() {
 
         {/* COLUMNA DERECHA: Totales de compra y Botón de Acción */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-[#E2DCD0] p-6 rounded-2xl border-2 border-stone-300 flex flex-col justify-between shadow-xs">
+          <div className="bg-[#E2DCD0] p-5 sm:p-6 rounded-2xl border-2 border-stone-300 flex flex-col justify-between shadow-sm">
             <div>
               <h2 className="text-sm font-black uppercase tracking-[0.2em] text-[#1C1816] pb-4 border-b border-stone-300">Productos a Fabricar</h2>
-              <div className="divide-y divide-stone-300 max-h-60 overflow-y-auto pr-2 scrollbar-none my-4">
+              <div className="divide-y divide-stone-300 max-h-60 overflow-y-auto pr-1 scrollbar-none my-4">
                 {activeCart.map((item) => (
-                  <div key={item.id} className="py-3 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
+                  <div key={item.id} className="py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-stone-300 bg-white shrink-0">
                         {item.image ? (
                           <Image src={item.image} alt={item.title} fill sizes="48px" className="object-cover" />
@@ -203,12 +203,12 @@ export default function ReviewPage() {
                           </div>
                         )}
                       </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-stone-900 line-clamp-1">{item.title}</h4>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-stone-900 truncate">{item.title}</h4>
                         <p className="text-[10px] text-stone-500 font-bold">Cantidad: {item.quantity}</p>
                       </div>
                     </div>
-                    <span className="text-xs font-black text-[#1C1816]">${(item.price * item.quantity).toLocaleString('es-AR')}</span>
+                    <span className="text-xs font-black text-[#1C1816] shrink-0">${(item.price * item.quantity).toLocaleString('es-AR')}</span>
                   </div>
                 ))}
               </div>
@@ -239,14 +239,14 @@ export default function ReviewPage() {
           <button 
             onClick={handlePlaceOrder} 
             disabled={isPlacingOrder}
-            className="w-full game-bounce bg-[#B57C38] hover:bg-[#1C1816] text-white hover:text-[#FFC107] py-4 rounded-xl font-bold uppercase text-xs tracking-[0.2em] transition-all border-2 border-[#B57C38] hover:border-[#1C1816] shadow-[0_4px_0px_#1C1816] active:translate-y-1 active:shadow-none flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full game-bounce bg-[#B57C38] hover:bg-[#1C1816] text-white hover:text-[#FFC107] py-4 px-6 rounded-xl font-bold uppercase text-xs tracking-[0.2em] transition-all border-2 border-[#B57C38] hover:border-[#1C1816] shadow-[0_4px_0px_#1C1816] active:translate-y-1 active:shadow-none flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPlacingOrder ? (
               "Procesando Orden..."
             ) : (
               paymentMethod === 'transferencia' ? 'Confirmar Orden Especial' : 'Pagar con Mercado Pago'
             )}
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 shrink-0">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
           </button>

@@ -1,3 +1,4 @@
+//src/app/api/uploadthing/core.ts
 /**
  * Configuración de UploadThing para el manejo de imágenes de productos.
  * * Este archivo define los "FileRoutes" que actúan como endpoints para 
@@ -5,31 +6,33 @@
  */
 
 import { createUploadthing, type FileRouter } from "uploadthing/next";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const f = createUploadthing();
 
-// Simulación de autenticación (Aquí integrarás tu lógica real, ej: NextAuth o Clerk)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const auth = (req: Request) => ({ id: "usuario_admin_123" });
-
-// Definimos el router para el manejo de subida de imágenes
 export const ourFileRouter = {
-  // Definimos una ruta llamada "imageUploader" para fotos de productos
   imageUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 5 } })
-    .middleware(async ({ req }) => {
-      const user = await auth(req);
+    .middleware(async () => {
+      // Obtenemos la sesión real del usuario autenticado
+      const session = await getServerSession(authOptions);
 
-      // Si el usuario no está autenticado, lanzamos error
-      if (!user) throw new Error("No autorizado");
+      // Validamos que exista una sesión activa
+      if (!session || !session.user) {
+        throw new Error("No autorizado: Debes iniciar sesión para realizar esta acción.");
+      }
 
-      return { userId: user.id };
+      // Validamos estrictamente que el usuario posea el rol de Administrador
+      if (session.user.role !== "ADMIN") {
+        throw new Error("Acceso denegado: Solo el administrador puede modificar el catálogo de productos.");
+      }
+
+      return { userId: session.user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      // Esta función se ejecuta cuando la subida termina
-      console.log("Subida completada por usuario:", metadata.userId);
-      console.log("URL del archivo:", file.url);
+      console.log("Subida completada por el administrador ID:", metadata.userId);
+      console.log("URL segura del archivo:", file.url);
       
-      // Aquí podrías disparar notificaciones o guardar la URL en tu DB
       return { uploadedBy: metadata.userId, url: file.url };
     }),
 } satisfies FileRouter;

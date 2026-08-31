@@ -1,10 +1,9 @@
-// src/app/components/shop/ProductView.tsx
 "use client";
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Product, Category } from '@prisma/client';
-import { useCartStore } from '@/store/cart/cart-store'; // 1. Importamos la store
+import { useCartStore } from '@/store/cart/cart-store';
 import { ProductSlideshow } from './ProductSlideShow';
 import { DecorarteIsotype } from '@/app/components/iconos/DecorArteBrand';
 
@@ -14,7 +13,7 @@ interface ProductViewProps {
 
 export const ProductView = ({ product }: ProductViewProps) => {
 
-  const addProductToCart = useCartStore((state) => state.addProductToCart); // 2. Traemos la acción
+  const addProductToCart = useCartStore((state) => state.addProductToCart);
   const router = useRouter();
   
   const formatPrice = (value: number) => {
@@ -26,17 +25,17 @@ export const ProductView = ({ product }: ProductViewProps) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 mt-4 mb-20 bg-(--bgWoodLight) backdrop-blur-md border-b border-stone-200/80 shadow-sm rounded-xl">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-4 mb-20 bg-[#F5F2EB]/80 backdrop-blur-md border-b border-stone-200/80 shadow-sm rounded-xl">
       
       {/* 1. NAVEGACIÓN DE RETORNO Y BREADCRUMBS */}
-      <div className="mt-48 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-stone-200">
+      <div className="mt-32 sm:mt-36 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-stone-200">
         
         {/* Botón de volver clásico con comportamiento dinámico */}
         <button
           onClick={() => router.back()}
-          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#1C1816] hover:text-[#B57C38] bg-white border-2 border-stone-200 hover:border-[#B57C38] px-4 py-2 rounded-xl shadow-[0_3px_0px_rgba(28,24,22,0.1)] active:translate-y-px active:shadow-none transition-all focus:outline-none w-fit"
+          className="inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-[#1C1816] hover:text-[#B57C38] bg-white border-2 border-stone-200 hover:border-[#B57C38] px-4 py-2.5 rounded-xl shadow-[0_3px_0px_rgba(28,24,22,0.1)] active:translate-y-px active:shadow-none transition-all focus:outline-none w-full sm:w-fit"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 shrink-0">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
           </svg>
           Volver
@@ -56,14 +55,14 @@ export const ProductView = ({ product }: ProductViewProps) => {
             {product.category.name}
           </span>
           <span className="text-stone-300 font-bold">/</span>
-          <span className="text-[#1C1816] font-semibold truncate max-w-45 sm:max-w-none">
+          <span className="text-[#1C1816] font-semibold truncate max-w-50 sm:max-w-none">
             {product.title}
           </span>
         </nav>
       </div>
 
       {/* 2. DETALLE DEL PRODUCTO (GRILLA) */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
         
         {/* Columna de Imágenes */}
         <div className="md:col-span-7 w-full">
@@ -71,7 +70,7 @@ export const ProductView = ({ product }: ProductViewProps) => {
         </div>
 
         {/* Columna de Detalles */}
-        <div className="md:col-span-5 bg-white rounded-2xl border-2 border-stone-200/80 p-8 shadow-[0_8px_24px_rgba(28,24,22,0.04)]">
+        <div className="md:col-span-5 bg-white rounded-2xl border-2 border-stone-200/80 p-6 sm:p-8 shadow-[0_8px_24px_rgba(28,24,22,0.04)]">
           
           {/* Etiqueta de la Colección */}
           <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#B57C38] bg-[#F5F2EB] px-3 py-1 rounded-md border border-stone-200">
@@ -79,7 +78,7 @@ export const ProductView = ({ product }: ProductViewProps) => {
           </span>
 
           {/* Título Principal */}
-          <h1 className="font-bold text-3xl md:text-4xl text-[#1C1816] tracking-tight mt-4 leading-tight">
+          <h1 className="font-bold text-2xl sm:text-3xl md:text-4xl text-[#1C1816] tracking-tight mt-4 leading-tight">
             {product.title}
           </h1>
           
@@ -92,11 +91,11 @@ export const ProductView = ({ product }: ProductViewProps) => {
           <div className="mt-6 flex items-center justify-between text-xs border-t border-b border-stone-100 py-3">
             <span className="font-bold text-stone-500 uppercase tracking-wider">Disponibilidad:</span>
             {product.stock > 0 ? (
-              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide">
+              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide">
                 {product.stock} disponibles en taller
               </span>
             ) : (
-              <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide">
+              <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide">
                 A pedido (15 días de producción)
               </span>
             )}
@@ -105,7 +104,7 @@ export const ProductView = ({ product }: ProductViewProps) => {
           {/* Botón de Añadir al carrito */}
           <button 
             disabled={product.stock === 0}
-            onClick={() => addProductToCart(product, 1)} // 3. Cableamos el clic aquí
+            onClick={() => addProductToCart(product, 1)}
             className={`w-full game-bounce py-4 rounded-xl font-bold uppercase text-xs tracking-[0.2em] transition-all duration-150 border-2 mt-6 focus:outline-none flex items-center justify-center gap-2
               ${product.stock > 0
                 ? 'bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white border-[#1C1816] shadow-[0_4px_0px_#B57C38] active:translate-y-1 active:shadow-none'

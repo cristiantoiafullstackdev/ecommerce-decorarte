@@ -1,3 +1,4 @@
+// src/app/components/checkout/PaymentMethodSelector.tsx
 "use client";
 
 import React from 'react';
@@ -11,7 +12,7 @@ interface Props {
 
 export const PaymentMethodSelector = ({ selectedMethod, onMethodChange }: Props) => {
   return (
-    <div className="bg-white p-6 md:p-10 rounded-2xl border-2 border-stone-200 shadow-sm space-y-6">
+    <div className="bg-white p-6 md:p-10 rounded-2xl border-2 border-stone-200 shadow-xs space-y-6">
       <div>
         <h2 className="text-base font-black text-[#1C1816] uppercase tracking-wider">
           Seleccioná el Método de Pago

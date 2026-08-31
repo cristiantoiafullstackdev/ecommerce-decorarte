@@ -1,3 +1,4 @@
+// src/app/components/checkout/PaymentButton.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -14,7 +15,6 @@ export default function PaymentButton({ preferenceId }: Props) {
     script.async = true;
 
     script.onload = () => {
-      // ✅ Usamos la variable de entorno pública
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mp = new (window as any).MercadoPago(
         process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY,
@@ -35,7 +35,9 @@ export default function PaymentButton({ preferenceId }: Props) {
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     };
   }, [preferenceId]);
 

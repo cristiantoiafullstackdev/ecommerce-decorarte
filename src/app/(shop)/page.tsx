@@ -4,18 +4,27 @@ import ProductList from '@/app/components/shop/ProductList';
 import { getPaginatedProducts, getCategories } from '@/actions/product-actions';
 
 export default async function ShopPage() {
-  // Resolvemos ambas peticiones en paralelo en el servidor de forma eficiente
+  
+  // Ejecutamos ambas peticiones en paralelo en el servidor para máxima velocidad de carga
   const [products, categories] = await Promise.all([
     getPaginatedProducts(),
-    getCategories() // Asegúrate de tener esta Action en tus product-actions que haga un prisma.category.findMany()
+    getCategories()
   ]);
 
   return (
-    <main className="min-h-screen bg-[#52301A]/40">
+    <div className="w-full flex flex-col">
+      
+      {/* Sección visual principal de bienvenida (Banners / Slider artesanal) */}
       <HeroShop />
       
-      {/* Inyectamos los datos limpios de la DB al orquestador cliente */}
-      <ProductList initialProducts={products} categories={categories} />
-    </main>
+      {/* 
+        Contenedor estructurado con máximos anchos y paddings adaptativos 
+        (más estrecho en celulares, más amplio en pantallas grandes).
+      */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <ProductList initialProducts={products} categories={categories} />
+      </div>
+
+    </div>
   );
 }

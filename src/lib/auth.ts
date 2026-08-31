@@ -1,9 +1,8 @@
-// src/lib/auth.ts
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
-import { Role } from "@prisma/client"; // 👈 Importamos el tipo Role de Prisma
+import { Role } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -36,7 +35,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role, // Prisma lo infiere correctamente
+          role: user.role,
         };
       }
     })
@@ -45,14 +44,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role as Role; // 👈 Tipado estricto
+        token.role = user.role as Role;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as Role; // 👈 Sin 'any', usando el enum Role
+        session.user.role = token.role as Role;
       }
       return session;
     }
@@ -62,6 +61,10 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 1 * 60 * 60, // 👈 1 hora de duración máxima de la sesión
+  },
+  jwt: {
+    maxAge: 1 * 60 * 60, // 👈 Sincronización estricta del token JWT
   },
   cookies: {
     sessionToken: {

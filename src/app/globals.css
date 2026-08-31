@@ -1,38 +1,62 @@
 @import "tailwindcss";
-/* 🎨 Variables globales de color */
+
+/* ==========================================================================
+   1. VARIABLES GLOBALES DE DISEÑO (Paleta DecorArte)
+   Centralizamos los colores para que cambiar la identidad visual requiera 
+   editar únicamente este bloque.
+   ========================================================================== */
 :root {
-  --bgWoodDark: "#3A2212",
-  --bgWoodMedium: "#5C3A21",
-  --bgWoodLight: "#7A4F31",
-  --ironDark: "#1E1A17",
-  --ironMedium: "#3E3A37",
-  --ironLight: "#6E6864",
-  --woodDark: "#52301A",
-  --woodMedium: "#915B33",
-  --woodLight: "#E0A363",
-  --accentGold: "#D69624",
-  --accentGoldLight: "#FFE699"
+  --bg-wood-dark: #3A2212;
+  --bg-wood-medium: #5C3A21;
+  --bg-wood-light: #7A4F31;
   
+  --iron-dark: #1E1A17;
+  --iron-medium: #3E3A37;
+  --iron-light: #6E6864;
+  
+  --wood-dark: #52301A;
+  --wood-medium: #915B33;
+  --wood-light: #E0A363;
+  
+  --accent-gold: #D69624;
+  --accent-gold-light: #FFE699;
 }
 
-/* Reset básico */
+/* ==========================================================================
+ 2. RESET Y CONFIGURACIÓN BASE MOBILE-FIRST
+ Prevenimos desbordamientos horizontales en dispositivos móviles.
+ ========================================================================== */
 html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
+ margin: 0;
+ padding: 0;
+ width: 100%;
+ overflow-x: hidden;
+ -webkit-text-size-adjust: 100%; /* Para Safari y Chrome */
+ text-size-adjust: 100%; /* Propiedad estándar */
 }
 
-/* Fuente base para cuerpo de texto */
-body {
-  font-family: 'Roboto', sans-serif;
-}  
-
-/* Box-sizing universal */
 * {
-  box-sizing: border-box;
+ box-sizing: border-box;
 }
 
-/* Títulos (Slab Serif) */
-h1, h2, h3 {
-  font-family: 'Roboto Slab', serif;
+body {
+ font-family: 'Roboto', sans-serif;
+}
+
+/* Tipografía de títulos con elegancia rústica */
+h1, h2, h3, h4, h5, h6 {
+ font-family: 'Roboto Slab', serif;
+}
+
+/* Clases de utilidad personalizadas */
+.btn-decorarte {
+ transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-decorarte:hover {
+ transform: translateY(-2px);
+}
+
+.btn-decorarte:active {
+ transform: scale(0.96) translateY(0);
 }

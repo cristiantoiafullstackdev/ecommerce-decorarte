@@ -6,9 +6,6 @@ import { useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { GameStyles } from '@/app/components/iconos/DecorArteBrand';
 
-// Esta página procesa la llegada genérica a /checkout/orders.
-// Si hay un query param '?id=XXXX', redirigimos automáticamente a /checkout/orders/XXXX.
-// Si no hay, muestra una linda pantalla de confirmación estática que nunca romperá el build.
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -16,21 +13,20 @@ function OrderSuccessContent() {
 
   useEffect(() => {
     if (orderId) {
-      // Redirigimos de forma segura a la ruta dinámica
       router.push(`/checkout/orders/${orderId}`);
     }
   }, [orderId, router]);
 
   return (
-    <main className="min-h-screen bg-[#F5F2EB] pt-36 pb-20 px-4 md:px-8 flex items-center justify-center">
+    <main className="min-h-screen bg-[#F5F2EB] pt-32 sm:pt-36 pb-20 px-4 sm:px-6 md:px-8 flex items-center justify-center">
       <GameStyles />
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl border-2 border-stone-200 shadow-sm text-center space-y-6">
+      <div className="max-w-md w-full bg-white p-6 sm:p-8 rounded-2xl border-2 border-stone-200 shadow-sm text-center space-y-6">
         <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto border-2 border-emerald-200">
           <span className="text-2xl text-emerald-600">✓</span>
         </div>
         
         <div className="space-y-2">
-          <h1 className="text-xl font-black text-[#1C1816] uppercase tracking-tight">
+          <h1 className="text-lg sm:text-xl font-black text-[#1C1816] uppercase tracking-tight">
             ¡Tu pedido fue recibido!
           </h1>
           <p className="text-xs text-stone-500">

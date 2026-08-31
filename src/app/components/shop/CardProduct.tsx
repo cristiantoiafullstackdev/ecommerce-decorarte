@@ -8,20 +8,19 @@ import { Product, Category } from '@prisma/client';
 import { DecorarteIsotype } from '@/app/components/iconos/DecorArteBrand';
 import { useCartStore } from '@/store/cart/cart-store';
 import { useWishlistStore } from '@/store/wishlist/wishlist-store';
-import { useSession } from 'next-auth/react'; // <--- 1. Importamos la sesión de NextAuth
+import { useSession } from 'next-auth/react';
 
 interface CardProductProps {
   product: Product & { category: Category };
 }
 
 export default function CardProduct({ product }: CardProductProps) {
-  const { data: session } = useSession(); // <--- 2. Obtenemos la sesión actual
-  const userId = session?.user?.id;       // <--- 3. Extraemos el id del usuario logueado
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
 
   const toggleFavorite = useWishlistStore((state) => state.toggleFavorite);
   const isFav = useWishlistStore((state) => state.isFavorite(product.id));
   const _hasHydrated = useWishlistStore((state) => state._hasHydrated);
-  // Solo marcamos como favorito si Zustand ya cargó del localStorage
   const isFavorite = _hasHydrated && isFav;
 
   const [imgError, setImgError] = useState(false);
@@ -40,18 +39,29 @@ export default function CardProduct({ product }: CardProductProps) {
   return (
     <div className="group relative bg-white rounded-2xl border-2 border-stone-200/80 shadow-[0_8px_24px_rgba(28,24,22,0.04)] hover:shadow-[0_12px_32px_rgba(28,24,22,0.12)] hover:border-[#B57C38] transition-all duration-300 flex flex-col overflow-hidden">
 
-      {/* Botón de Favorito con userId */}
+      {/* Botón de Favorito Estilo */}
       <button 
-        onClick={() => toggleFavorite(product.id, userId)} // <--- 4. Pasamos el userId aquí
-        className="absolute top-3 right-3 z-10 p-2 bg-white/80 backdrop-blur-xs rounded-full border border-stone-200 hover:scale-110 transition-all shadow-xs"
+        onClick={() => toggleFavorite(product.id, userId)}
+        className={`absolute top-3 right-3 z-10 game-bounce p-2.5 rounded-xl border-2 transition-all duration-100 shadow-[0_3px_0px_#1C1816] active:translate-y-0.75 active:shadow-none focus:outline-none flex items-center justify-center
+          ${isFavorite 
+            ? 'bg-[#1C1816] border-[#1C1816] text-[#D69624]' 
+            : 'bg-[#F5F2EB] border-[#1C1816] text-stone-700 hover:bg-[#1C1816] hover:text-[#D69624]'
+          }`}
         aria-label="Marcar como favorito"
       >
-        <span className={`text-lg leading-none ${isFavorite ? 'text-[#C84B31] font-bold' : 'text-stone-400'}`}>
-          {isFavorite ? '♥' : '♡'}
-        </span>
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          fill={isFavorite ? "#D69624" : "none"} 
+          viewBox="0 0 24 24" 
+          strokeWidth={2.5} 
+          stroke="currentColor" 
+          className="w-5 h-5 transition-transform duration-300 group-hover:scale-105"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+        </svg>
       </button>
       
-      {/* Resto de tu componente imagen y textos... */}
+      {/* Contenedor de Imagen */}
       <div className="relative w-full aspect-square bg-[#F5F2EB] flex items-center justify-center overflow-hidden border-b border-stone-100">
         <span className="absolute top-3 left-3 z-10 bg-[#1C1816] text-[#F5F2EB] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border border-stone-700 shadow-sm">
           {product.category.name}
@@ -80,32 +90,36 @@ export default function CardProduct({ product }: CardProductProps) {
         <div className="absolute inset-0 bg-[#3A2212]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      <div className="p-5 flex flex-col grow justify-between bg-[#E2DCD0]">
+      {/* Información e Inferior */}
+      <div className="p-3 sm:p-5 flex flex-col grow justify-between bg-[#E2DCD0]">
         <div>
-          <h3 className="font-bold text-stone-900 text-base md:text-lg tracking-tight leading-snug group-hover:text-[#B57C38] transition-colors duration-200">
-            {product.title}
-          </h3>
-          <p className="text-xs text-stone-500 mt-1 line-clamp-2 font-light">
+          <Link href={`/product/${product.slug}`}>
+            <h3 className="font-bold text-stone-900 text-base md:text-lg tracking-tight leading-snug group-hover:text-[#B57C38] transition-colors duration-200 line-clamp-1">
+              {product.title}
+            </h3>
+          </Link>
+          <p className="text-xs text-stone-600 mt-1 line-clamp-2 font-light leading-relaxed">
             {product.description}
           </p>
         </div>
 
-        <div className="mt-4 flex items-center justify-between pt-3 border-t border-stone-300/80">
+        <div className="mt-4 flex items-center justify-between pt-3 border-t border-stone-300/80 gap-2">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-widest text-stone-600 font-bold flex items-center gap-1">
+            <span className="text-[9px] uppercase tracking-widest text-stone-500 font-bold">
               Stock: {product.stock}
             </span>
-            <span className="text-xl font-black text-[#1C1816]">
+            <span className="text-md md:text-xl font-black text-[#1C1816]">
               {formatPrice(product.price)}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Botón de Carrito con userId */}
+          {/* Botones de acción agrupados: Carrito + Ver Detalle */}
+          <div className="flex items-center gap-1 md:gap-2">
+            {/* 1. Botón de Carrito (Bolsa) */}
             <button
-              onClick={() => addProductToCart(product, 1, userId)} // <--- 5. Pasamos el userId aquí también
+              onClick={() => addProductToCart(product, 1, userId)}
               disabled={product.stock === 0}
-              className="game-bounce bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white border-2 border-[#1C1816] rounded-xl p-3 shadow-[0_3px_0px_#B57C38] active:translate-y-0.75 active:shadow-none disabled:opacity-30 disabled:pointer-events-none transition-all duration-100 focus:outline-none"
+              className="game-bounce bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white border-2 border-[#1C1816] rounded-xl p-2.5 shadow-[0_3px_0px_#B57C38] active:translate-y-0.75 active:shadow-none disabled:opacity-30 disabled:pointer-events-none transition-all duration-100 focus:outline-none"
               aria-label="Añadir directo a la bolsa"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
@@ -113,9 +127,10 @@ export default function CardProduct({ product }: CardProductProps) {
               </svg>
             </button>
 
+            {/* 2. Botón de Ver Detalle (Ojo) */}
             <Link 
               href={`/product/${product.slug}`}
-              className="game-bounce bg-[#F5F2EB] hover:bg-[#1C1816] text-[#1C1816] hover:text-[#FFC107] border-2 border-[#1C1816] rounded-xl p-3 shadow-[0_3px_0px_#1C1816] active:translate-y-0.75 active:shadow-none transition-all duration-100 focus:outline-none"
+              className="game-bounce bg-[#F5F2EB] hover:bg-[#1C1816] text-[#1C1816] hover:text-[#FFC107] border-2 border-[#1C1816] rounded-xl p-2.5 shadow-[0_3px_0px_#1C1816] active:translate-y-0.75 active:shadow-none transition-all duration-100 focus:outline-none flex items-center justify-center"
               aria-label={`Ver detalles de ${product.title}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">

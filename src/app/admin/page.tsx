@@ -1,4 +1,3 @@
-// src/app/admin/page.tsx
 import Link from 'next/link';
 import prisma from '@/lib/prisma';
 
@@ -6,22 +5,22 @@ export default async function AdminDashboard() {
   const totalOrders = await prisma.order.count();
   const pendingOrders = await prisma.order.count({ where: { status: 'PENDING' } });
  
-return (
-    <div className="p-8 space-y-8 bg-[#FCF9F5] min-h-screen font-sans text-stone-900">
+  return (
+    <div className="space-y-6 font-sans text-stone-900">
       {/* Cabecera */}
-      <div className="flex justify-between items-center border-b border-stone-200 pb-6">
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border-2 border-stone-200 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-wider text-stone-900">
+          <h1 className="text-xl sm:text-2xl font-black uppercase tracking-wider text-stone-900">
             ⚡ Centro de Mando — DecorArte
           </h1>
-          <p className="text-xs text-stone-500 font-medium">
+          <p className="text-xs text-stone-500 font-medium mt-0.5">
             Resumen ejecutivo del taller y accesos rápidos de gestión.
           </p>
         </div>
-        <div>
+        <div className="w-full sm:w-auto">
           <Link
             href="/admin/orders"
-            className="relative px-5 py-3 bg-stone-900 text-[#FFF9F2] rounded-xl text-xs font-black uppercase tracking-wider hover:bg-stone-800 transition-all shadow-sm inline-flex items-center gap-3"
+            className="w-full sm:w-auto text-center px-5 py-3 bg-stone-900 text-[#FFF9F2] rounded-xl text-xs font-black uppercase tracking-wider hover:bg-stone-800 transition-all shadow-sm inline-flex items-center justify-center gap-3"
           >
             <span>Ver Órdenes</span>
           </Link>
@@ -29,7 +28,7 @@ return (
       </div>
 
       {/* Tarjetas de Métricas Macro */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         <div className="bg-white p-6 rounded-2xl border-2 border-stone-200 shadow-xs space-y-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Total Histórico Órdenes</span>
           <div className="text-3xl font-black text-stone-900">{totalOrders}</div>

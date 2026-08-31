@@ -1,3 +1,4 @@
+//src/app/api/auth/[...nextauth]/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Asegúrate de que esta sea tu ruta de importación de Prisma
 

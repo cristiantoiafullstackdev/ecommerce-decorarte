@@ -1,3 +1,4 @@
+// src/app/components/admin/FileUploader.tsx
 "use client";
 
 import { useState } from "react";
@@ -23,9 +24,7 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
 
   return (
     <div className="w-full space-y-3">
-      {}
       <style dangerouslySetInnerHTML={{ __html: `
-        /* 1. Forzamos transparencia total y nulidad de tamaño de texto al input nativo */
         .ut-button input[type="file"],
         [data-ut-element="button"] input[type="file"] {
           opacity: 0 !important;
@@ -41,8 +40,6 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
           cursor: pointer !important;
           z-index: 10 !important;
         }
-
-        /* 2. Ocultamos el botón nativo en navegadores Webkit (Chrome, Edge, Safari) */
         .ut-button input[type="file"]::-webkit-file-upload-button,
         [data-ut-element="button"] input[type="file"]::-webkit-file-upload-button {
           display: none !important;
@@ -50,8 +47,6 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
           width: 0 !important;
           height: 0 !important;
         }
-
-        /* 3. Ocultamos el selector de archivos nativo en Firefox */
         .ut-button input[type="file"]::file-selector-button,
         [data-ut-element="button"] input[type="file"]::file-selector-button {
           display: none !important;
@@ -59,8 +54,6 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
           width: 0 !important;
           height: 0 !important;
         }
-
-        /* 4. Bloqueamos cualquier contenido residual inyectado por la librería */
         .ut-allowed-content {
           display: none !important;
           opacity: 0 !important;
@@ -69,7 +62,6 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
         }
       `}} />
       
-      {}
       {currentUrl && !isUploading && (
         <div className="bg-emerald-50/50 border-2 border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 animate-fade-in">
           <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-emerald-300 bg-white shadow-xs shrink-0">
@@ -93,7 +85,7 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
             <button
               type="button"
               onClick={() => onUploadComplete("")}
-              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-stone-50 text-stone-700 hover:text-[#B57C38] border border-stone-200 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shadow-2xs active:translate-y-px"
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-stone-50 text-stone-700 hover:text-[#B57C38] border border-stone-200 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shadow-2xs active:translate-y-px"
             >
               <RefreshCw className="w-3 h-3" />
               Cambiar Fotografía
@@ -102,10 +94,9 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
         </div>
       )}
 
-      {}
       {(!currentUrl || isUploading) && (
         <div 
-          className={`relative border-2 border-dashed rounded-2xl p-6 transition-all duration-200 flex flex-col items-center justify-center min-h-[140px] text-center
+          className={`relative border-2 border-dashed rounded-2xl p-6 transition-all duration-200 flex flex-col items-center justify-center min-h-35 text-center
             ${isUploading 
               ? "border-[#B57C38] bg-amber-50/20" 
               : "border-stone-200 hover:border-[#B57C38] bg-[#FCF9F5] hover:bg-[#FAF6F0]"
@@ -140,9 +131,8 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
                   Soporta JPG, PNG o WEBP de hasta 4MB
                 </p>
               </div>
-
-              {}
-              <div className="w-full max-w-[200px] relative">
+              
+              <div className="w-full max-w-50 relative">
                 <UploadButton
                   endpoint="imageUploader"
                   onUploadBegin={() => {
@@ -158,7 +148,6 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
                   onUploadError={(err: Error) => {
                     setIsUploading(false);
                     setUploadError(err.message || "No se pudo completar la transferencia.");
-                    console.error("Fallo de subida:", err.message);
                   }}
                   appearance={{
                     button: "w-full bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white font-black uppercase text-[10px] py-2.5 px-4 rounded-xl transition-all shadow-[0_3px_0px_#B57C38] active:translate-y-px active:shadow-none cursor-pointer relative overflow-hidden",
@@ -166,8 +155,7 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
                     container: "w-full flex justify-center",
                   }}
                   content={{
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    button({ ready: _ready }: { ready: boolean }) {
+                    button() {
                       return "SELECCIONAR FOTO";
                     },
                     allowedContent() {
@@ -181,7 +169,6 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
         </div>
       )}
 
-      {}
       {uploadError && (
         <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl p-3 flex items-start gap-2.5 animate-fade-in">
           <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
@@ -193,7 +180,6 @@ export default function FileUploader({ onUploadComplete, currentUrl }: FileUploa
           </div>
         </div>
       )}
-
     </div>
   );
 }

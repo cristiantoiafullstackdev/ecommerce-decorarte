@@ -1,9 +1,9 @@
-// src/app/components/cart/SlidebarCart.tsx
+// src/app/components/cart/SidebarCart.tsx
 "use client";
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation'; // <-- Importamos el enrutador de Next
-import { useSession } from 'next-auth/react'; // <-- Importamos las sesiones de NextAuth
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { DecorarteIsotype } from '@/app/components/iconos/DecorArteBrand';
 import { useCartStore } from '@/store/cart/cart-store';
 
@@ -13,10 +13,9 @@ interface SidebarCartProps {
 }
 
 export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
-  const router = useRouter(); // Instanciamos el router para navegar
-  const { status } = useSession(); // Evaluamos si está autenticado en el Front
+  const router = useRouter();
+  const { status } = useSession();
   
-  // 1. Conectamos las acciones y estados del motor de Zustand
   const cart = useCartStore((state) => state.cart);
   const updateQuantity = useCartStore((state) => state.updateProductQuantity);
   const removeItem = useCartStore((state) => state.removeProductFromCart);
@@ -24,21 +23,16 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
   const totalItems = useCartStore((state) => state.getTotalItems());
   const subTotal = useCartStore((state) => state.getSubTotal());
 
-  // 2. Control de renderizado basado en hidratación de Zustand
   const activeCart = hasHydrated ? cart : [];
   const activeTotalItems = hasHydrated ? totalItems : 0;
   const activeSubTotal = hasHydrated ? subTotal : 0;
 
-  // Lógica del botón de Checkout
   const handleCheckoutClick = () => {
-    // Cerramos el panel lateral para una transición limpia
     onClose();
 
     if (status === "authenticated") {
-      // Caso Logueado: Va directo a cargar sus datos de envío
       router.push('/checkout');
     } else {
-      // Caso Visitante: Lo mandamos al login, pero guardamos en la URL que quiere ir a /checkout
       router.push('/auth/login?callbackUrl=/checkout');
     }
   };
@@ -49,7 +43,6 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
         isOpen ? "visible" : "invisible pointer-events-none"
       }`}
     >
-      
       {/* BACKDROP */}
       <div 
         className={`absolute inset-0 bg-[#1C1816]/50 backdrop-blur-xs transition-opacity duration-300 ${
@@ -59,7 +52,7 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
       />
 
       {/* PANEL DESLIZANTE */}
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
+      <div className="absolute inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
         <div 
           className={`w-screen max-w-md bg-[#EAE6DC] border-l-4 border-[#1C1816] flex flex-col shadow-2xl h-full transition-transform duration-300 ease-out transform ${
             isOpen ? "translate-x-0" : "translate-x-full"
@@ -67,10 +60,10 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
         >
           
           {/* CABECERA DEL CARRITO */}
-          <div className="px-6 py-5 bg-[#E2DCD0] border-b-2 border-stone-300/80 flex items-center justify-between">
+          <div className="px-5 sm:px-6 py-4 sm:py-5 bg-[#E2DCD0] border-b-2 border-stone-300/80 flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#1C1816]">
               <DecorarteIsotype size={20} />
-              <h2 className="text-sm font-black uppercase tracking-[0.2em]">Tu Bolsa de Compra</h2>
+              <h2 className="text-xs sm:text-sm font-black uppercase tracking-[0.15em]">Tu Bolsa de Compra</h2>
               {activeTotalItems > 0 && (
                 <span className="bg-[#B57C38] text-white font-bold text-[10px] px-2 py-0.5 rounded-md">
                   {activeTotalItems}
@@ -90,21 +83,21 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
           </div>
 
           {/* CUERPO DEL CARRITO */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-none">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             
             {/* ESTADO VACÍO */}
             {activeCart.length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-center pb-12">
                 <div className="text-stone-400 mb-4 animate-pulse">
-                  <DecorarteIsotype size={64} />
+                  <DecorarteIsotype size={56} />
                 </div>
-                <h3 className="text-base font-black text-[#1C1816] uppercase tracking-wider">Tu bolsa está vacía</h3>
+                <h3 className="text-sm sm:text-base font-black text-[#1C1816] uppercase tracking-wider">Tu bolsa está vacía</h3>
                 <p className="text-xs text-stone-600 mt-2 max-w-xs">
                   Parece que aún no has sumado ninguna pieza artesanal a tu orden. ¡Explorá nuestro catálogo!
                 </p>
                 <button 
                   onClick={onClose}
-                  className="mt-6 border-2 border-[#1C1816] px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-[#1C1816] hover:bg-[#1C1816] hover:text-white transition-all"
+                  className="mt-6 border-2 border-[#1C1816] px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-[#1C1816] hover:bg-[#1C1816] hover:text-white transition-all shadow-xs"
                 >
                   Volver al Catálogo
                 </button>
@@ -115,29 +108,29 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
             {activeCart.map((item) => (
               <div 
                 key={item.id} 
-                className="flex gap-4 bg-white p-4 rounded-xl border-2 border-stone-300/60 shadow-[0_4px_12px_rgba(28,24,22,0.03)] relative group"
+                className="flex gap-3 sm:gap-4 bg-white p-3.5 sm:p-4 rounded-xl border-2 border-stone-300/60 shadow-[0_4px_12px_rgba(28,24,22,0.03)] relative group"
               >
                 {/* Imagen del Producto */}
-                <div className="relative w-20 h-20 bg-[#F5F2EB] rounded-lg overflow-hidden border border-stone-200 shrink-0">
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-[#F5F2EB] rounded-lg overflow-hidden border border-stone-200 shrink-0">
                   {item.image ? (
                     <Image 
                       src={item.image} 
                       alt={item.title} 
                       fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
+                      sizes="80px"
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-stone-300 bg-linear-to-br from-[#EFECE4] to-[#E5E1D5]">
-                      <DecorarteIsotype size={36} />
+                    <div className="absolute inset-0 flex items-center justify-center text-stone-300 bg-stone-50">
+                      <DecorarteIsotype size={32} />
                     </div>
                   )}
                 </div>
 
                 {/* Detalles y Controles */}
-                <div className="flex flex-col justify-between w-full">
+                <div className="flex flex-col justify-between w-full pr-5 sm:pr-0">
                   <div>
-                    <h3 className="text-sm font-bold text-[#1C1816] line-clamp-1 tracking-tight pr-6">
+                    <h3 className="text-xs sm:text-sm font-bold text-[#1C1816] line-clamp-1 tracking-tight">
                       {item.title}
                     </h3>
                     <p className="text-[10px] text-[#B57C38] uppercase tracking-wider font-semibold">
@@ -153,7 +146,7 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
                       >
                         -
                       </button>
-                      <span className="px-3 text-xs font-bold text-[#1C1816]">
+                      <span className="px-2.5 text-xs font-bold text-[#1C1816]">
                         {item.quantity}
                       </span>
                       <button 
@@ -165,7 +158,7 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
                       </button>
                     </div>
                     
-                    <span className="text-sm font-black text-[#1C1816]">
+                    <span className="text-xs sm:text-sm font-black text-[#1C1816]">
                       ${item.price.toLocaleString('es-AR')}
                     </span>
                   </div>
@@ -174,7 +167,7 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
                 {/* Botón de Remover Ítem */}
                 <button 
                   onClick={() => removeItem(item.id)}
-                  className="absolute top-3 right-3 text-stone-300 hover:text-rose-600 transition-colors"
+                  className="absolute top-3 right-3 text-stone-300 hover:text-rose-600 transition-colors p-1"
                   aria-label="Eliminar producto"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
@@ -188,7 +181,7 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
 
           {/* TOTALES Y ACCIONES FIJAS ABAJO */}
           {activeCart.length > 0 && (
-            <div className="p-6 bg-[#E2DCD0] border-t-2 border-stone-300/80 space-y-4">
+            <div className="p-5 sm:p-6 bg-[#E2DCD0] border-t-2 border-stone-300/80 space-y-4">
               <div className="space-y-1.5 text-xs font-semibold text-stone-600">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
@@ -200,20 +193,19 @@ export default function SidebarCart({ isOpen, onClose }: SidebarCartProps) {
                   <span>Envío (Córdoba y Resto del País)</span>
                   <span>Calculado en Checkout</span>
                 </div>
-                <div className="border-t border-stone-300/60 pt-3 flex justify-between text-base font-black text-[#1C1816]">
+                <div className="border-t border-stone-300/60 pt-3 flex justify-between text-sm sm:text-base font-black text-[#1C1816]">
                   <span>Total Estimado</span>
-                  <span className="text-lg font-black">
+                  <span className="text-base sm:text-lg font-black">
                     ${activeSubTotal.toLocaleString('es-AR')}
                   </span>
                 </div>
               </div>
 
-              {/* Botón de Checkout Conectado a handleCheckoutClick */}
               <button 
                 onClick={handleCheckoutClick}
-                className="w-full game-bounce bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white py-4 rounded-xl font-bold uppercase text-xs tracking-[0.2em] transition-all duration-150 border-2 border-[#1C1816] shadow-[0_4px_0px_#B57C38] active:translate-y-1 active:shadow-none focus:outline-none flex items-center justify-center gap-2"
+                className="w-full bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white py-3.5 sm:py-4 rounded-xl font-black uppercase text-xs tracking-[0.15em] transition-all duration-150 border-2 border-[#1C1816] shadow-[0_4px_0px_#B57C38] active:translate-y-1 active:shadow-none focus:outline-none flex items-center justify-center gap-2"
               >
-                Iniciar Orden de Compra
+                <span>Iniciar Orden de Compra</span>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                 </svg>
