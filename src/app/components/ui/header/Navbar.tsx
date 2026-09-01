@@ -11,14 +11,14 @@ export const Navbar = async () => {
   return (
     <>
       {/* Header fijo superior con lógica de sesión, búsqueda y carrito */}
-      <Header currentSection="catalogo" />
+      <Header />
       
       {/* 
         Espaciador estructural (Dummy Block).
         Equivale a la altura exacta del header fijo (h-32) para evitar que 
         el contenido de la página se oculte detrás del componente fixed.
       */}
-      <div className="h-32 w-full bg-[var(--iron-dark)]/10" />
+      <div className="h-32 w-full bg-(--iron-dark)/10" />
     </>
   );
 };
