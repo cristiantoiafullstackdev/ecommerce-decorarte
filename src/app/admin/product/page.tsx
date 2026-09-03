@@ -115,10 +115,13 @@ export default function AdminProductsPage() {
       const res = await deleteProduct(productToDelete);
       if (res.ok) {
         setSuccessMsg(res.message);
+        // Filtramos localmente o recargamos
         setProducts((prev) => prev.filter((p) => p.id !== productToDelete));
         setTimeout(() => setSuccessMsg(null), 4000);
       } else {
-        setErrorMsg(res.message);
+        // AQUÍ ESTABA EL DETALLE: Mostramos la razón exacta del rechazo (ej. por estar en un pedido)
+        setErrorMsg(res.message || "No se pudo eliminar el producto.");
+        setTimeout(() => setErrorMsg(null), 5000);
       }
       setProductToDelete(null);
     });
@@ -300,30 +303,29 @@ export default function AdminProductsPage() {
             <form onSubmit={handleFormSubmit} className="space-y-4">
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">Título del Producto *</label>
-                <input required type="text" name="title" value={formData.title} onChange={handleFormChange} placeholder="Ej: Estante Flotante Roble Rústico" className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold focus:outline-none transition-colors" />
+                <input required type="text" name="title" value={formData.title} onChange={handleFormChange} placeholder="Ej: Estante Flotante Roble Rústico" className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold text-stone-900 placeholder-stone-400 focus:outline-none transition-colors" />
               </div>
 
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">Categoría / Línea *</label>
-                <input required type="text" name="categoryName" value={formData.categoryName} onChange={handleFormChange} placeholder="Ej: estantes, percheros, mesas" className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold focus:outline-none transition-colors" />
+                <input required type="text" name="categoryName" value={formData.categoryName} onChange={handleFormChange} placeholder="Ej: estantes, percheros, mesas" className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold text-stone-900 placeholder-stone-400 focus:outline-none transition-colors" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">Precio ($ Netos AR) *</label>
-                  <input required type="number" step="0.01" name="price" value={formData.price} onChange={handleFormChange} placeholder="Ej: 34500" className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold focus:outline-none transition-colors" />
+                  <input required type="number" step="0.01" name="price" value={formData.price} onChange={handleFormChange} placeholder="Ej: 34500" className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold text-stone-900 placeholder-stone-400 focus:outline-none transition-colors" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">Stock de Taller *</label>
-                  <input required type="number" name="stock" value={formData.stock} onChange={handleFormChange} placeholder="Ej: 15" className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold focus:outline-none transition-colors" />
+                  <input required type="number" name="stock" value={formData.stock} onChange={handleFormChange} placeholder="Ej: 15" className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold text-stone-900 placeholder-stone-400 focus:outline-none transition-colors" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">Descripción Técnica</label>
-                <textarea rows={3} name="description" value={formData.description} onChange={handleFormChange} placeholder="Especificaciones de la madera, herrajes de hierro..." className="w-full p-4 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-medium focus:outline-none transition-colors resize-none" />
+                <textarea rows={3} name="description" value={formData.description} onChange={handleFormChange} placeholder="Especificaciones de la madera, herrajes de hierro..." className="w-full p-4 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-medium text-stone-900 placeholder-stone-400 focus:outline-none transition-colors resize-none" />
               </div>
-
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">URL de Imagen Principal</label>
                 <FileUploader 

@@ -40,6 +40,7 @@ function generateSlug(title: string): string {
 export const getPaginatedProducts = async (): Promise<(Product & { category: Category })[]> => {
   try {
     return await prisma.product.findMany({
+      where: { isActive: true },
       include: { category: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -61,7 +62,10 @@ export const getCategories = async (): Promise<Category[]> => {
 export const getProductBySlug = async (slug: string): Promise<(Product & { category: Category }) | null> => {
   try {
     return await prisma.product.findFirst({
-      where: { slug },
+      where: { 
+        slug,
+        isActive: true, // <--- Evita que se vea si está inactivo
+      },
       include: { category: true },
     });
   } catch (error) {
@@ -73,8 +77,9 @@ export const getProductBySlug = async (slug: string): Promise<(Product & { categ
 export async function getAdminProducts(): Promise<{ ok: boolean; products: AdminProduct[]; error?: string }> {
   try {
     const rawProducts = await prisma.product.findMany({
+      where: { isActive: true }, // <--- Vital para que los dados de baja no se listen en el panel
       orderBy: { createdAt: "desc" },
-      include: { category: { select: { id: true, name: true } } }
+      include: { category: true }
     });
 
     const products: AdminProduct[] = rawProducts.map((p) => ({
@@ -92,27 +97,36 @@ export async function getAdminProducts(): Promise<{ ok: boolean; products: Admin
 
 export async function upsertProduct(data: ProductInput): Promise<{ ok: boolean; message: string }> {
   try {
-    const generatedSlug = generateSlug(data.title);
+    const categoryNameClean = data.categoryName.trim().toLowerCase();
+    const categorySlug = generateSlug(data.categoryName);
 
-    // 1. Obtener/Crear categoría
-    const category = await prisma.category.upsert({
-      where: { name: data.categoryName.trim().toLowerCase() },
-      update: {},
-      create: { 
-        name: data.categoryName.trim().toLowerCase(),
-        slug: generateSlug(data.categoryName),
-      },
+    let category = await prisma.category.findFirst({
+      where: {
+        OR: [
+          { slug: categorySlug },
+          { name: categoryNameClean }
+        ]
+      }
     });
 
-    // 2. Estructurar el objeto para Prisma usando los tipos correctos
+    if (!category) {
+      category = await prisma.category.create({
+        data: {
+          name: categoryNameClean,
+          slug: categorySlug,
+        },
+      });
+    }
+
+// 2. Estructurar el objeto para Prisma...
     const productData = {
       title: data.title,
       description: data.description,
       price: data.price,
       stock: data.stock,
-      slug: generatedSlug,
+      slug: generateSlug(data.title),
       images: data.images,
-      category: { connect: { id: category.id } } // La clave del éxito sin 'any'
+      category: { connect: { id: category.id } }
     };
 
     if (data.id) {
@@ -138,26 +152,48 @@ export async function upsertProduct(data: ProductInput): Promise<{ ok: boolean; 
 
 export async function deleteProduct(id: string): Promise<{ ok: boolean; message: string }> {
   try {
-    const itemsCount = await prisma.orderItem.count({ where: { productId: id } });
-    if (itemsCount > 0) {
-      return { ok: false, message: "No es posible eliminar el producto por estar en un pedido." };
+    // 1. Verificamos si tiene pedidos activos en curso
+    const activeOrdersCount = await prisma.orderItem.count({
+      where: {
+        productId: id,
+        order: {
+          status: {
+            in: ["PENDING", "PAID", "PREPARING"],
+          },
+        },
+      },
+    });
+
+    if (activeOrdersCount > 0) {
+      return { 
+        ok: false, 
+        message: "No se puede dar de baja: el producto pertenece a pedidos activos en curso." 
+      };
     }
 
-    await prisma.product.delete({ where: { id } });
+    // 2. BORRADO LÓGICO: En lugar de borrarlo, lo desactivamos
+    await prisma.product.update({
+      where: { id },
+      data: { 
+        isActive: false,
+        stock: 0 // Opcional: dejamos el stock en 0 por seguridad
+      },
+    });
+
     revalidatePath("/admin/products");
     revalidatePath("/");
-    return { ok: true, message: "Producto eliminado." };
+    return { ok: true, message: "Producto dado de baja correctamente." };
   } catch (error: unknown) {
-    console.log(error)
-    return { ok: false, message: "Error al eliminar." };
+    console.error("Error al dar de baja el producto:", error);
+    return { ok: false, message: "Error al intentar procesar la baja del producto." };
   }
 }
-
 export async function searchProducts(query: string) {
   if (!query || !query.trim()) return [];
   try {
     return await prisma.product.findMany({
       where: {
+        isActive: true, // <--- Solo busca entre los activos
         title: {
           contains: query.trim(),
           mode: 'insensitive',

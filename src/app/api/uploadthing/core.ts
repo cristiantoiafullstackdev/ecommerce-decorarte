@@ -1,8 +1,6 @@
 //src/app/api/uploadthing/core.ts
 /**
  * Configuración de UploadThing para el manejo de imágenes de productos.
- * * Este archivo define los "FileRoutes" que actúan como endpoints para 
- * subir archivos, asegurando la autenticación y permisos antes de la subida.
  */
 
 import { createUploadthing, type FileRouter } from "uploadthing/next";
@@ -14,7 +12,7 @@ const f = createUploadthing();
 export const ourFileRouter = {
   imageUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 5 } })
     .middleware(async () => {
-      // Obtenemos la sesión real del usuario autenticado
+      // Obtenemos la sesión respetando el tipado estricto
       const session = await getServerSession(authOptions);
 
       // Validamos que exista una sesión activa

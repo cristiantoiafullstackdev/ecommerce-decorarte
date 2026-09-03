@@ -24,7 +24,7 @@ export default function FilterCatalog({
 
   return (
     <section id="catalog" className="w-full bg-[#E2DCD0] py-12 px-6 md:px-16 lg:px-24 border-b border-stone-200 scroll-mt-36">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-8xl mx-auto space-y-8">
         
         {/* Section Header & Barra de Búsqueda Integrada */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -59,7 +59,7 @@ export default function FilterCatalog({
         </div>
 
         {/* Filters Container with horizontal mobile scrolling */}
-        <div className="flex items-center justify-start md:justify-center overflow-x-auto p-2 scrollbar-none space-x-4 md:space-x-6">
+        <div className="flex items-center justify-start md:justify-center overflow-x-auto p-2 space-x-3 md:space-x-4">
           
           <button
             onClick={() => onCategoryChange('todo')}
