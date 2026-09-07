@@ -1,7 +1,5 @@
 [
-  { "name": "Ver Todos", "slug": "todo" },
-  { "name": "Juegos de Mesa", "slug": "juegos" },
-  { "name": "Hierro Forjado", "slug": "hierro" },
+  { "name": "Juegos de Mesa", "slug": "juegos de mesa" },
   { "name": "Iluminación", "slug": "iluminacion" },
   { "name": "Objetos Deco", "slug": "deco" }
 ]

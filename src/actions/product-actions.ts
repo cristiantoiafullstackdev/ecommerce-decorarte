@@ -11,10 +11,11 @@ export interface ProductInput {
   price: number;
   stock: number;
   images: string[];
-  categoryName: string;
+  categoryId: string;
 }
 
 export interface AdminProduct {
+  categoryId: string;
   id: string;
   title: string;
   description: string;
@@ -97,25 +98,13 @@ export async function getAdminProducts(): Promise<{ ok: boolean; products: Admin
 
 export async function upsertProduct(data: ProductInput): Promise<{ ok: boolean; message: string }> {
   try {
-    const categoryNameClean = data.categoryName.trim().toLowerCase();
-    const categorySlug = generateSlug(data.categoryName);
-
-    let category = await prisma.category.findFirst({
-      where: {
-        OR: [
-          { slug: categorySlug },
-          { name: categoryNameClean }
-        ]
-      }
+// Validamos que la categoría exista en la base de datos
+    const category = await prisma.category.findUnique({
+      where: { id: data.categoryId }
     });
 
     if (!category) {
-      category = await prisma.category.create({
-        data: {
-          name: categoryNameClean,
-          slug: categorySlug,
-        },
-      });
+      return { ok: false, message: "La categoría seleccionada no es válida." };
     }
 
 // 2. Estructurar el objeto para Prisma...
@@ -126,7 +115,7 @@ export async function upsertProduct(data: ProductInput): Promise<{ ok: boolean; 
       stock: data.stock,
       slug: generateSlug(data.title),
       images: data.images,
-      category: { connect: { id: category.id } }
+      categoryId: data.categoryId
     };
 
     if (data.id) {
@@ -136,7 +125,7 @@ export async function upsertProduct(data: ProductInput): Promise<{ ok: boolean; 
       });
     } else {
       await prisma.product.create({
-        data: productData as Prisma.ProductCreateInput,
+        data: productData,
       });
     }
 
@@ -211,5 +200,85 @@ export async function searchProducts(query: string) {
   } catch (error) {
     console.error("Error al buscar productos:", error);
     return [];
+  }
+}
+
+// ==========================================
+// ACCIONES DE CATEGORÍAS
+// ==========================================
+
+export async function upsertCategory(data: { id?: string; name: string }): Promise<{ ok: boolean; message: string }> {
+  try {
+    const slug = generateSlug(data.name);
+
+    // Validar si ya existe otra categoría con el mismo slug o nombre
+    const existing = await prisma.category.findFirst({
+      where: {
+        OR: [{ name: data.name }, { slug }],
+        NOT: data.id ? { id: data.id } : undefined,
+      },
+    });
+
+    if (existing) {
+      return { ok: false, message: "Ya existe una categoría con ese nombre." };
+    }
+
+    if (data.id) {
+      await prisma.category.update({
+        where: { id: data.id },
+        data: { name: data.name, slug },
+      });
+    } else {
+      await prisma.category.create({
+        data: { name: data.name, slug },
+      });
+    }
+
+    revalidatePath("/admin/categories");
+    revalidatePath("/admin/products");
+    revalidatePath("/");
+
+    return { ok: true, message: `La categoría "${data.name}" se guardó correctamente.` };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+    return { ok: false, message: `Error en base de datos: ${errorMessage}` };
+  }
+}
+
+export async function deleteCategory(categoryId: string, newCategoryId?: string) {
+  try {
+    // 1. Verificamos si tiene productos asociados
+    const productsCount = await prisma.product.count({
+      where: { categoryId: categoryId }
+    });
+
+    if (productsCount > 0) {
+      if (!newCategoryId) {
+        return { 
+          ok: false, 
+          hasProducts: true, 
+          count: productsCount,
+          message: `La categoría tiene ${productsCount} productos asociados. Debes reasignarlos antes de borrarla.` 
+        };
+      }
+
+      // Si se especificó una nueva categoría, movemos los productos primero
+      await prisma.product.updateMany({
+        where: { categoryId: categoryId },
+        data: { categoryId: newCategoryId }
+      });
+    }
+
+    // 2. Eliminamos la categoría
+    await prisma.category.delete({
+      where: { id: categoryId }
+    });
+
+    revalidatePath('/admin/categories');
+    revalidatePath('/admin/products');
+    return { ok: true, message: "Categoría eliminada correctamente." };
+  } catch (error) {
+    console.log(error)
+    return { ok: false, message: "Error al intentar eliminar la categoría." };
   }
 }

@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   title: "Artesanías DecorArte | Taller de Muebles de Autor",
   description: "Muebles de madera y hierro con alma artesanal, creados en Córdoba.",
   icons: {
-    icon: "/favicon.svg?v=3",
-  }
+    icon: "/api/favicon?v=2",
+  },
 };
 
 export default function RootLayout({

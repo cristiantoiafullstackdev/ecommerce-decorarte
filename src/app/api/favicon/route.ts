@@ -1,4 +1,6 @@
-export const RawSvgFavicon = `
+import { NextResponse } from "next/server";
+
+const RawSvgFavicon = `
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 140 140" fill="none">
   <defs>
     <linearGradient id="boardWoodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -6,41 +8,34 @@ export const RawSvgFavicon = `
       <stop offset="60%" stop-color="#704C23" />
       <stop offset="100%" stop-color="#3A2212" />
     </linearGradient>
-
     <linearGradient id="lettersWoodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#D7A15C" />
       <stop offset="50%" stop-color="#B57C38" />
       <stop offset="100%" stop-color="#6E471B" />
     </linearGradient>
-
     <linearGradient id="ironShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#7E7874" />
       <stop offset="50%" stop-color="#4E4844" />
       <stop offset="100%" stop-color="#1C1816" />
     </linearGradient>
-
     <linearGradient id="ironBorderGrad" x1="100%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#8E8884" />
       <stop offset="50%" stop-color="#1C1816" />
       <stop offset="100%" stop-color="#0A0807" />
     </linearGradient>
-
     <linearGradient id="steelToolGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#9E9894" />
       <stop offset="50%" stop-color="#3E3A37" />
       <stop offset="100%" stop-color="#1E1A17" />
     </linearGradient>
-
     <linearGradient id="brassPernosGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FFE57F" />
       <stop offset="100%" stop-color="#FFC107" />
     </linearGradient>
-
     <filter id="softShadow" x="-10%" y="-10%" width="125%" height="125%">
       <feDropShadow dx="2" dy="4" stdDeviation="2.5" flood-opacity="0.55" />
     </filter>
   </defs>
-
   <g filter="url(#softShadow)">
     <path d="M 12,22 C 25,18 55,21 85,19 C 112,17 124,20 128,24 C 131,45 129,75 131,105 C 132,118 123,122 118,124 C 95,127 55,125 22,126 C 13,126 9,118 9,105 C 8,85 11,50 12,22 Z" fill="url(#boardWoodGrad)" stroke="#3A2212" stroke-width="2.5" />
     <path d="M 16,35 Q 45,30 122,38" stroke="rgba(0,0,0,0.22)" stroke-width="1.5" fill="none" />
@@ -49,7 +44,6 @@ export const RawSvgFavicon = `
     <path d="M 12,22 L 18,28" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
     <path d="M 128,24 L 122,30" stroke="rgba(0,0,0,0.3)" stroke-width="1" />
   </g>
-
   <g filter="url(#softShadow)">
     <path d="M 32,28 L 108,28 L 108,72 C 108,94 90,108 70,115 C 50,108 32,94 32,72 Z" fill="url(#ironBorderGrad)" />
     <path d="M 36,32 L 104,32 L 104,70 C 104,90 88,103 70,109 C 52,103 36,90 36,70 Z" fill="url(#ironShieldGrad)" stroke="#1C1816" stroke-width="1.5" />
@@ -60,7 +54,6 @@ export const RawSvgFavicon = `
     <circle cx="101" cy="68" r="1.5" fill="url(#brassPernosGrad)" />
     <circle cx="70" cy="104" r="1.5" fill="url(#brassPernosGrad)" />
   </g>
-
   <g filter="url(#softShadow)">
     <g>
       <path d="M 42,92 L 84,50" stroke="url(#lettersWoodGrad)" stroke-width="5.5" stroke-linecap="round" />
@@ -73,7 +66,6 @@ export const RawSvgFavicon = `
       <rect x="54" y="48" width="4" height="4" transform="rotate(-45 54 48)" fill="url(#brassPernosGrad)" />
     </g>
   </g>
-
   <g filter="url(#softShadow)">
     <polygon points="34,88 45,88 61,41 50,41" fill="url(#lettersWoodGrad)" stroke="#1C1816" stroke-width="1.5" />
     <polygon points="50,41 61,41 77,88 66,88" fill="url(#lettersWoodGrad)" stroke="#1C1816" stroke-width="1.5" />
@@ -81,14 +73,12 @@ export const RawSvgFavicon = `
     <path d="M 40,84 L 48,58" stroke="rgba(0,0,0,0.22)" stroke-width="1" />
     <path d="M 71,84 L 59,53" stroke="rgba(0,0,0,0.22)" stroke-width="1" />
   </g>
-
   <g filter="url(#softShadow)">
     <path d="M 74,41 L 96,41 L 108,53 L 108,76 L 96,88 L 74,88 Z M 85,52 L 85,77 L 93,77 L 97,73 L 97,56 L 93,52 Z" fill="url(#lettersWoodGrad)" stroke="#1C1816" stroke-width="1.5" fill-rule="evenodd" />
     <path d="M 102,57 L 102,72" stroke="rgba(0,0,0,0.22)" stroke-width="1" />
     <path d="M 79,47 L 91,47" stroke="rgba(0,0,0,0.22)" stroke-width="1" />
     <path d="M 79,82 L 91,82" stroke="rgba(0,0,0,0.22)" stroke-width="1" />
   </g>
-
   <circle cx="55.5" cy="45" r="2.2" fill="url(#brassPernosGrad)" stroke="#1C1816" stroke-width="0.8" />
   <circle cx="43" cy="66.5" r="1.8" fill="url(#brassPernosGrad)" stroke="#1C1816" stroke-width="0.8" />
   <circle cx="67" cy="66.5" r="1.8" fill="url(#brassPernosGrad)" stroke="#1C1816" stroke-width="0.8" />
@@ -100,3 +90,12 @@ export const RawSvgFavicon = `
   <circle cx="78.5" cy="82.5" r="1.8" fill="url(#brassPernosGrad)" stroke="#1C1816" stroke-width="0.8" />
 </svg>
 `;
+
+export async function GET() {
+  return new NextResponse(RawSvgFavicon.trim(), {
+    headers: {
+      "Content-Type": "image/svg+xml",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
+}

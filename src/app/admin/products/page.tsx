@@ -2,12 +2,14 @@
 
 import React, { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
-import { getAdminProducts, upsertProduct, deleteProduct, AdminProduct, ProductInput } from "@/actions/product-actions";
+import { getAdminProducts, upsertProduct, deleteProduct, AdminProduct, ProductInput, getCategories } from "@/actions/product-actions";
 import { DecorarteIsotype, GameStyles } from "@/app/components/iconos/DecorArteBrand";
 import FileUploader from "@/app/components/admin/FileUploader";
+import { Category } from "@prisma/client";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export default function AdminProductsPage() {
     description: "",
     price: "",
     stock: "",
-    categoryName: "",
+    categoryId: "",
     imageUrl: "",
   });
 
@@ -29,17 +31,20 @@ export default function AdminProductsPage() {
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    async function loadProducts() {
+    async function loadData() {
       setLoading(true);
-      const res = await getAdminProducts();
-      if (res.ok) {
-        setProducts(res.products);
-      } else {
-        setErrorMsg(res.error || "Error al cargar catálogo de productos.");
-      }
+      const [prodRes, catRes] = await Promise.all([
+        getAdminProducts(),
+        getCategories()
+      ]);  
+      if (prodRes.ok) setProducts(prodRes.products);
+      else setErrorMsg(prodRes.error || "Error al cargar catálogo.");
+
+      if (catRes) setCategories(catRes);
+
       setLoading(false);
     }
-    loadProducts();
+    loadData();
   }, []);
 
   const openAddModal = () => {
@@ -49,7 +54,7 @@ export default function AdminProductsPage() {
       description: "",
       price: "",
       stock: "",
-      categoryName: "",
+      categoryId: "",
       imageUrl: "",
     });
     setIsModalOpen(true);
@@ -62,7 +67,7 @@ export default function AdminProductsPage() {
       description: product.description,
       price: product.price.toString(),
       stock: product.stock.toString(),
-      categoryName: product.category?.name || "maderas",
+      categoryId: product.categoryId || "",
       imageUrl: product.images && product.images.length > 0 ? product.images[0] : "",
     });
     setIsModalOpen(true);
@@ -85,7 +90,7 @@ export default function AdminProductsPage() {
       price: parseFloat(formData.price),
       stock: parseInt(formData.stock),
       images: formData.imageUrl.trim() ? [formData.imageUrl.trim()] : [],
-      categoryName: formData.categoryName,
+      categoryId: formData.categoryId,
     };
 
     startTransition(async () => {
@@ -308,7 +313,20 @@ export default function AdminProductsPage() {
 
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">Categoría / Línea *</label>
-                <input required type="text" name="categoryName" value={formData.categoryName} onChange={handleFormChange} placeholder="Ej: estantes, percheros, mesas" className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold text-stone-900 placeholder-stone-400 focus:outline-none transition-colors" />
+                <select 
+                  required 
+                  name="categoryId" 
+                  value={formData.categoryId} 
+                  onChange={handleFormChange} 
+                  className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs font-semibold text-stone-900 focus:outline-none transition-colors"
+                >
+                  <option value="" disabled>Seleccioná una categoría...</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
