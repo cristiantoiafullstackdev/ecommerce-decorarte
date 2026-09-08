@@ -1,3 +1,4 @@
+//src/lib/auth.ts
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
@@ -66,17 +67,7 @@ export const authOptions: NextAuthOptions = {
   jwt: {
     maxAge: 1 * 60 * 60, // 👈 Sincronización estricta del token JWT
   },
-  cookies: {
-    sessionToken: {
-      name: `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-      },
-    },
-  },
+
   secret: process.env.NEXTAUTH_SECRET,
 };
 
