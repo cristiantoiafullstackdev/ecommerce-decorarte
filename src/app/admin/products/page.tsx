@@ -6,6 +6,7 @@ import { getAdminProducts, upsertProduct, deleteProduct, AdminProduct, ProductIn
 import { DecorarteIsotype, GameStyles } from "@/app/components/iconos/DecorArteBrand";
 import FileUploader from "@/app/components/admin/FileUploader";
 import { Category } from "@prisma/client";
+import Link from "next/link"
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
@@ -120,11 +121,9 @@ export default function AdminProductsPage() {
       const res = await deleteProduct(productToDelete);
       if (res.ok) {
         setSuccessMsg(res.message);
-        // Filtramos localmente o recargamos
         setProducts((prev) => prev.filter((p) => p.id !== productToDelete));
         setTimeout(() => setSuccessMsg(null), 4000);
       } else {
-        // AQUÍ ESTABA EL DETALLE: Mostramos la razón exacta del rechazo (ej. por estar en un pedido)
         setErrorMsg(res.message || "No se pudo eliminar el producto.");
         setTimeout(() => setErrorMsg(null), 5000);
       }
@@ -139,34 +138,41 @@ export default function AdminProductsPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans text-stone-900">
       <GameStyles />
 
-      {/* ENCABEZADO DE SECCIÓN */}
+      {/* CABECERA UNIFICADA */}
       <div className="bg-white p-5 sm:p-6 rounded-2xl border-2 border-stone-200 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-2.5 bg-stone-100 rounded-xl border border-stone-200 shrink-0">
-            <DecorarteIsotype size={40} className="text-[#B57C38]" />
+          <div className="p-3 bg-stone-100 rounded-xl border border-stone-200 shrink-0">
+            <DecorarteIsotype size={36} className="text-[#B57C38]" />
           </div>
           <div>
             <span className="text-[10px] font-black uppercase tracking-widest text-[#B57C38]">
               Administración de Catálogo
             </span>
-            <h1 className="text-lg sm:text-xl font-black text-[#1C1816] uppercase mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-stone-900 mt-0.5">
               Gestión de Productos (ABM)
             </h1>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-stone-500 font-medium mt-0.5">
               Añadí piezas de diseño rústico, modificá precios y controlá los niveles de stock.
             </p>
           </div>
         </div>
-
-        <button
-          onClick={openAddModal}
-          className="w-full sm:w-auto px-5 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-[0_4px_0px_#B57C38] active:translate-y-0.5 active:shadow-none shrink-0 text-center"
-        >
-          ➕ Agregar Pieza
-        </button>
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+          <Link 
+            href="/admin"
+            className="w-full sm:w-auto px-5 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-[0_4px_0px_#B57C38] active:translate-y-0.5 active:shadow-none inline-flex items-center justify-center gap-2 text-center"
+          >
+            <span>&larr; Volver al Centro de Mando</span>
+          </Link>
+          <button
+            onClick={openAddModal}
+            className="w-full sm:w-auto px-5 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-[0_4px_0px_#B57C38] active:translate-y-0.5 active:shadow-none inline-flex items-center justify-center gap-2 text-center"
+          >
+            <span>➕ Agregar Pieza</span>
+          </button>
+        </div>
       </div>
 
       {/* ALERTAS */}
@@ -363,7 +369,7 @@ export default function AdminProductsPage() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full sm:flex-1 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50 text-center"
+                  className="w-full sm:flex-1 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50 text-center shadow-[0_4px_0px_#B57C38] active:translate-y-0.5 active:shadow-none"
                 >
                   {isPending ? "Guardando..." : "Guardar Cambios"}
                 </button>

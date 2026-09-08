@@ -3,11 +3,9 @@ import prisma from '@/lib/prisma';
 import { DecorarteIsotype, GameStyles } from "@/app/components/iconos/DecorArteBrand";
 
 export default async function AdminDashboard() {
-  // Consultas reales a la base de datos (Acciones de compradores y taller)
   const totalOrders = await prisma.order.count();
   const pendingOrders = await prisma.order.count({ where: { status: 'PENDING' } });
   
-  // Contamos productos con stock crítico (ej: 3 o menos unidades) y total de clientes
   const lowStockProducts = await prisma.product.count({ 
     where: { 
       isActive: true, 
@@ -16,7 +14,6 @@ export default async function AdminDashboard() {
   });
   const totalClients = await prisma.user.count({ where: { role: 'USER' } }).catch(() => 0);
 
-  // Obtenemos las últimas 5 órdenes con su respectivo tipo limpio
   const recentOrders = await prisma.order.findMany({
     take: 5,
     orderBy: { createdAt: 'desc' },
@@ -29,7 +26,7 @@ export default async function AdminDashboard() {
     <div className="space-y-6 font-sans text-stone-900">
       <GameStyles />
 
-      {/* CABECERA */}
+      {/* CABECERA UNIFICADA */}
       <div className="bg-white p-5 sm:p-6 rounded-2xl border-2 border-stone-200 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-stone-100 rounded-xl border border-stone-200 shrink-0">
@@ -50,14 +47,14 @@ export default async function AdminDashboard() {
         <div className="w-full sm:w-auto flex gap-2">
           <Link
             href="/admin/orders"
-            className="w-full sm:w-auto text-center px-5 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm inline-flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-5 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-[0_4px_0px_#B57C38] active:translate-y-0.5 active:shadow-none inline-flex items-center justify-center gap-2"
           >
             <span>📦 Ver Órdenes</span>
           </Link>
         </div>
       </div>
 
-      {/* TARJETAS DE MÉTRICAS CLAVE (Acción de usuarios) */}
+      {/* TARJETAS DE MÉTRICAS CLAVE */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         
         {/* Órdenes Pendientes */}

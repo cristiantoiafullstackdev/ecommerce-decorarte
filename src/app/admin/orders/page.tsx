@@ -2,7 +2,7 @@
 
 import { getAdminOrders } from "@/actions/admin-actions";
 import Link from "next/link";
-import { GameStyles } from "@/app/components/iconos/DecorArteBrand";
+import { DecorarteIsotype } from "@/app/components/iconos/DecorArteBrand";
 import { OrderStatus } from "@prisma/client";
 
 function getOrderStatusBadge(status: string) {
@@ -28,18 +28,23 @@ export default async function AdminOrdersPage() {
 
   return (
     <main className="min-h-screen bg-[#F5F2EB] pt-28 pb-20 px-4 md:px-8">
-      <GameStyles />
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Cabecera */}
+        {/* Cabecera unificada */}
         <div className="bg-[#FCF9F5] border-2 border-stone-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#1C1816] uppercase tracking-wider">Gestión de Órdenes</h1>
-            <p className="text-xs text-stone-500 uppercase tracking-widest mt-1">Panel de control y seguimiento de pedidos del taller</p>
+          <div className="flex items-center gap-4">
+            <div className="p-2.5 bg-stone-100 rounded-xl border border-stone-200 shrink-0">
+              <DecorarteIsotype size={36} className="text-[#B57C38]" />
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#B57C38]">Panel Operativo</span>
+              <h1 className="text-xl sm:text-2xl font-black text-[#1C1816] uppercase tracking-wider">Gestión de Órdenes</h1>
+              <p className="text-xs text-stone-500 uppercase tracking-widest mt-1">Seguimiento de pedidos del taller</p>
+            </div>
           </div>
           <Link 
             href="/admin"
-            className="px-4 py-2 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+            className="w-full sm:w-auto px-4 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-[0_4px_0px_#B57C38] active:translate-y-0.5 text-center shrink-0"
           >
             ← Volver al Centro de Mando
           </Link>
