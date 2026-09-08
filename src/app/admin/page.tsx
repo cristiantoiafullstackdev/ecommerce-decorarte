@@ -26,31 +26,53 @@ export default async function AdminDashboard() {
     <div className="space-y-6 font-sans text-stone-900">
       <GameStyles />
 
-      {/* CABECERA UNIFICADA */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border-2 border-stone-200 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-stone-100 rounded-xl border border-stone-200 shrink-0">
-            <DecorarteIsotype size={36} className="text-[#B57C38]" />
+      {/* CABECERA UNIFICADA CON ACCESOS MÓVILES Y DESKTOP */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border-2 border-stone-200 shadow-xs flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-stone-100 rounded-xl border border-stone-200 shrink-0">
+              <DecorarteIsotype size={36} className="text-[#B57C38]" />
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#B57C38]">
+                Centro de Mando
+              </span>
+              <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-stone-900 mt-0.5">
+                Taller DecorArte
+              </h1>
+              <p className="text-xs text-stone-500 font-medium mt-0.5">
+                Resumen en tiempo real de la actividad y pedidos de los compradores.
+              </p>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#B57C38]">
-              Centro de Mando
-            </span>
-            <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-stone-900 mt-0.5">
-              Taller DecorArte
-            </h1>
-            <p className="text-xs text-stone-500 font-medium mt-0.5">
-              Resumen en tiempo real de la actividad y pedidos de los compradores.
-            </p>
+
+          {/* Botón principal de órdenes (visible también en desktop) */}
+          <div className="w-full sm:w-auto flex gap-2">
+            <Link
+              href="/admin/orders"
+              className="w-full sm:w-auto px-5 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-[0_4px_0px_#B57C38] active:translate-y-0.5 active:shadow-none inline-flex items-center justify-center gap-2"
+            >
+              <span>📦 Ver Órdenes</span>
+            </Link>
           </div>
         </div>
-        <div className="w-full sm:w-auto flex gap-2">
+
+        {/* BARRA DE NAVEGACIÓN RÁPIDA (Solución definitiva para mobile sin sidebar) */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 pt-3 border-t border-stone-100">
           <Link
-            href="/admin/orders"
-            className="w-full sm:w-auto px-5 py-3 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-[0_4px_0px_#B57C38] active:translate-y-0.5 active:shadow-none inline-flex items-center justify-center gap-2"
+            href="/"
+            className="px-4 py-2.5 bg-[#1C1816] hover:bg-[#B57C38] text-[#FFC107] hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all text-center flex items-center justify-center gap-1.5"
           >
-            <span>📦 Ver Órdenes</span>
+            <span>🛒 Ir al Shop</span>
           </Link>
+          <form action="/api/auth/signout" method="POST" className="col-span-2 sm:col-span-1">
+            <button
+              type="submit"
+              className="w-full px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all text-center flex items-center justify-center gap-1.5"
+            >
+              <span>🚪 Cerrar Sesión</span>
+            </button>
+          </form>
         </div>
       </div>
 
