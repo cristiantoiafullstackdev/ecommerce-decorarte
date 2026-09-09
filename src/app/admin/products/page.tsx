@@ -1,18 +1,21 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition, useMemo } from "react";
 import Image from "next/image";
 import { getAdminProducts, upsertProduct, deleteProduct, AdminProduct, ProductInput, getCategories } from "@/actions/product-actions";
 import { DecorarteIsotype, GameStyles } from "@/app/components/iconos/DecorArteBrand";
 import FileUploader from "@/app/components/admin/FileUploader";
 import { Category } from "@prisma/client";
-import Link from "next/link"
+import Link from "next/link";
+
+const ITEMS_PER_PAGE = 4; // Cantidad óptima de filas por página en tablas administrativas
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -79,6 +82,11 @@ export default function AdminProductsPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -131,11 +139,27 @@ export default function AdminProductsPage() {
     });
   };
 
-  const filteredProducts = products.filter((product) => {
-    const nameMatch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const categoryMatch = (product.category?.name || "").toLowerCase().includes(searchQuery.toLowerCase());
-    return nameMatch || categoryMatch;
-  });
+  // Filtrado optimizado con useMemo
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const nameMatch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const categoryMatch = (product.category?.name || "").toLowerCase().includes(searchQuery.toLowerCase());
+      return nameMatch || categoryMatch;
+    });
+  }, [products, searchQuery]);
+
+  // Cálculos de Paginación
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const safeCurrentPage = Math.min(currentPage, totalPages || 1);
+
+  const paginatedProducts = useMemo(() => {
+    const start = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, safeCurrentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="space-y-6 font-sans text-stone-900">
@@ -193,12 +217,12 @@ export default function AdminProductsPage() {
           type="text"
           placeholder="Buscar maderas por nombre o categoría..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-[#1C1816] bg-[#FCF9F5] text-xs text-stone-800 font-medium focus:outline-none transition-colors"
         />
       </div>
 
-      {/* TABLA DE PRODUCTOS */}
+      {/* TABLA DE PRODUCTOS CON PAGINACIÓN INTEGRADA */}
       <div className="bg-white rounded-2xl border-2 border-stone-200 shadow-xs overflow-hidden">
         {loading ? (
           <div className="p-16 text-center space-y-3">
@@ -216,84 +240,149 @@ export default function AdminProductsPage() {
             <p className="text-xs text-stone-500">Comenzá dando de alta tu primer estante o perchero.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs min-w-162.5">
-              <thead>
-                <tr className="bg-[#FCF9F5] border-b-2 border-stone-200 text-stone-500 font-black uppercase tracking-wider">
-                  <th className="p-4 pl-6">Pieza / Diseño</th>
-                  <th className="p-4">Categoría</th>
-                  <th className="p-4 text-right">Precio Neto</th>
-                  <th className="p-4 text-center">Nivel de Stock</th>
-                  <th className="p-4 pr-6 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100 text-stone-700 font-medium">
-                {filteredProducts.map((product) => {
-                  const stock = product.stock;
-                  let stockBadgeText = "Disponible";
-                  let stockBadgeStyle = "bg-emerald-50 text-emerald-800 border-emerald-300";
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs min-w-162.5">
+                <thead>
+                  <tr className="bg-[#FCF9F5] border-b-2 border-stone-200 text-stone-500 font-black uppercase tracking-wider">
+                    <th className="p-4 pl-6">Pieza / Diseño</th>
+                    <th className="p-4">Categoría</th>
+                    <th className="p-4 text-right">Precio Neto</th>
+                    <th className="p-4 text-center">Nivel de Stock</th>
+                    <th className="p-4 pr-6 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100 text-stone-700 font-medium">
+                  {paginatedProducts.map((product) => {
+                    const stock = product.stock;
+                    let stockBadgeText = "Disponible";
+                    let stockBadgeStyle = "bg-emerald-50 text-emerald-800 border-emerald-300";
 
-                  if (stock === 0) {
-                    stockBadgeText = "Sin Stock";
-                    stockBadgeStyle = "bg-red-50 text-red-800 border-red-200";
-                  } else if (stock <= 3) {
-                    stockBadgeText = `Bajo (${stock})`;
-                    stockBadgeStyle = "bg-amber-50 text-amber-800 border-amber-200";
-                  } else {
-                    stockBadgeText = `Stock: ${stock}`;
-                    stockBadgeStyle = "bg-stone-50 text-stone-800 border-stone-200";
-                  }
+                    if (stock === 0) {
+                      stockBadgeText = "Sin Stock";
+                      stockBadgeStyle = "bg-red-50 text-red-800 border-red-200";
+                    } else if (stock <= 3) {
+                      stockBadgeText = `Bajo (${stock})`;
+                      stockBadgeStyle = "bg-amber-50 text-amber-800 border-amber-200";
+                    } else {
+                      stockBadgeText = `Stock: ${stock}`;
+                      stockBadgeStyle = "bg-stone-50 text-stone-800 border-stone-200";
+                    }
 
-                  return (
-                    <tr key={product.id} className="hover:bg-stone-50/50 transition-colors">
-                      <td className="p-4 pl-6">
-                        <div className="flex items-center gap-3">
-                          <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-stone-200 bg-stone-50 shrink-0">
-                            {product.images && product.images.length > 0 ? (
-                              <Image src={product.images[0]} alt={product.title} fill className="object-cover" />
-                            ) : (
-                              <div className="absolute inset-0 flex items-center justify-center text-stone-400">🪵</div>
-                            )}
+                    return (
+                      <tr key={product.id} className="hover:bg-stone-50/50 transition-colors">
+                        <td className="p-4 pl-6">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-stone-200 bg-stone-50 shrink-0">
+                              {product.images && product.images.length > 0 ? (
+                                <Image src={product.images[0]} alt={product.title} fill className="object-cover" />
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-stone-400">🪵</div>
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-stone-900 uppercase max-w-45 sm:max-w-xs truncate">{product.title}</h4>
+                              <p className="text-[10px] text-stone-400 font-mono select-all">ID: {product.id.slice(0, 8)}...</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-bold text-stone-900 uppercase max-w-45 sm:max-w-xs truncate">{product.title}</h4>
-                            <p className="text-[10px] text-stone-400 font-mono select-all">ID: {product.id.slice(0, 8)}...</p>
+                        </td>
+                        <td className="p-4 uppercase tracking-wider text-[10px] font-black text-stone-500">
+                          {product.category?.name || "maderas"}
+                        </td>
+                        <td className="p-4 text-right font-black text-stone-900">
+                          ${product.price.toLocaleString("es-AR")}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider ${stockBadgeStyle}`}>
+                            {stockBadgeText}
+                          </span>
+                        </td>
+                        <td className="p-4 pr-6 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => openEditModal(product)}
+                              className="border border-stone-200 bg-white hover:bg-stone-50 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors"
+                            >
+                              ✏️ Editar
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(product.id)}
+                              className="border border-red-200 bg-red-50/50 hover:bg-red-50 text-red-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors"
+                            >
+                              🗑️ Borrar
+                            </button>
                           </div>
-                        </div>
-                      </td>
-                      <td className="p-4 uppercase tracking-wider text-[10px] font-black text-stone-500">
-                        {product.category?.name || "maderas"}
-                      </td>
-                      <td className="p-4 text-right font-black text-stone-900">
-                        ${product.price.toLocaleString("es-AR")}
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider ${stockBadgeStyle}`}>
-                          {stockBadgeText}
-                        </span>
-                      </td>
-                      <td className="p-4 pr-6 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => openEditModal(product)}
-                            className="border border-stone-200 bg-white hover:bg-stone-50 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors"
-                          >
-                            ✏️ Editar
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(product.id)}
-                            className="border border-red-200 bg-red-50/50 hover:bg-red-50 text-red-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors"
-                          >
-                            🗑️ Borrar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* BARRA DE PAGINACIÓN MOBILE-FIRST */}
+            {totalPages > 1 && (
+              <nav 
+                aria-label="Paginación de productos de administración" 
+                className="p-5 bg-[#FCF9F5] border-t-2 border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-4"
+              >
+                <div className="text-[11px] font-bold text-stone-500 uppercase tracking-wider text-center sm:text-left">
+                  Página <span className="text-[#1C1816] font-black">{safeCurrentPage}</span> de <span className="text-[#1C1816] font-black">{totalPages}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-center">
+                  <button
+                    onClick={() => handlePageChange(safeCurrentPage - 1)}
+                    disabled={safeCurrentPage <= 1}
+                    className="flex-1 sm:flex-none px-3 sm:px-3.5 py-2 rounded-xl border-2 border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-30 disabled:hover:bg-white text-xs font-black uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-1"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 shrink-0">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                    <span>Anterior</span>
+                  </button>
+
+                  <div className="flex items-center gap-1 mx-1 overflow-x-auto max-w-55 sm:max-w-none py-1 scrollbar-none">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      const isNearCurrent = Math.abs(page - safeCurrentPage) <= 1 || page === 1 || page === totalPages;
+                      
+                      if (!isNearCurrent) {
+                        if (page === 2 || page === totalPages - 1) {
+                          return <span key={page} className="px-1 text-stone-400 font-bold text-xs select-none">•••</span>;
+                        }
+                        return null;
+                      }
+
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`min-w-8 h-8 px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center shrink-0 ${
+                            safeCurrentPage === page
+                              ? "bg-[#1C1816] text-[#FFC107] shadow-sm scale-105"
+                              : "border-2 border-stone-200 bg-white text-stone-600 hover:bg-stone-100"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => handlePageChange(safeCurrentPage + 1)}
+                    disabled={safeCurrentPage >= totalPages}
+                    className="flex-1 sm:flex-none px-3 sm:px-3.5 py-2 rounded-xl border-2 border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-30 disabled:hover:bg-white text-xs font-black uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-1"
+                  >
+                    <span>Siguiente</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 shrink-0">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </button>
+                </div>
+              </nav>
+            )}
+          </>
         )}
       </div>
 

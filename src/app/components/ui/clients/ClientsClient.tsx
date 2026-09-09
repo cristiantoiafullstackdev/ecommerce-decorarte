@@ -21,9 +21,12 @@ interface ClientsClientProps {
   initialClients: ClientWithOrders[];
 }
 
+const CLIENTS_PER_PAGE = 8; // Cantidad de clientes por página en la tabla
+
 export default function ClientsClient({ initialClients }: ClientsClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('ALL');
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   const filteredClients = useMemo(() => {
     return initialClients.filter((client) => {
@@ -37,6 +40,18 @@ export default function ClientsClient({ initialClients }: ClientsClientProps) {
     });
   }, [initialClients, searchTerm, selectedRole]);
 
+  const totalPages = Math.ceil(filteredClients.length / CLIENTS_PER_PAGE);
+  const safeCurrentPage = Math.min(currentPage, totalPages || 1);
+
+  const paginatedClients = useMemo(() => {
+    const start = (safeCurrentPage - 1) * CLIENTS_PER_PAGE;
+    return filteredClients.slice(start, start + CLIENTS_PER_PAGE);
+  }, [filteredClients, safeCurrentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="space-y-6">
       {/* Barra de Filtros y Búsqueda */}
@@ -46,7 +61,10 @@ export default function ClientsClient({ initialClients }: ClientsClientProps) {
             type="text"
             placeholder="Buscar por nombre o email..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // Reseteamos la página directamente al buscar
+            }}
             className="w-full px-4 py-2.5 rounded-xl border-2 border-stone-200 bg-[#FCF9F5] text-xs font-medium focus:outline-none focus:border-[#1C1816] text-stone-900"
           />
         </div>
@@ -55,8 +73,11 @@ export default function ClientsClient({ initialClients }: ClientsClientProps) {
           <span className="text-[10px] font-black uppercase tracking-wider text-stone-500">Filtrar Rol:</span>
           <select
             value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value)}
-            className="px-4 py-2.5 rounded-xl border-2 border-stone-200 bg-[#FCF9F5] text-xs font-bold text-stone-800 focus:outline-none focus:border-[#1C1816]"
+            onChange={(e) => {
+              setSelectedRole(e.target.value);
+              setCurrentPage(1); // Reseteamos la página directamente al filtrar por rol
+            }}
+            className="px-4 py-2.5 rounded-xl border-2 border-stone-200 bg-[#FCF9F5] text-xs font-bold text-stone-800 focus:outline-none focus:border-[#1C1816] cursor-pointer"
           >
             <option value="ALL">Todos los roles</option>
             <option value="USER">USER</option>
@@ -80,17 +101,17 @@ export default function ClientsClient({ initialClients }: ClientsClientProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-200 text-xs text-stone-800 font-medium">
-              {filteredClients.map((client) => {
+              {paginatedClients.map((client) => {
                 const totalSpent = client.orders.reduce((acc, order) => acc + (order.total || 0), 0);
                 
                 return (
                   <tr key={client.id} className="hover:bg-[#FCF9F5] transition-colors">
                     <td className="p-4">
-                      <div className="font-bold text-[#1C1816]">{client.name || 'Sin Nombre Registrado'}</div>
-                      <div className="text-stone-500 text-[11px]">{client.email}</div>
+                      <div className="font-bold text-[#1C1816] uppercase">{client.name || 'Sin Nombre Registrado'}</div>
+                      <div className="text-stone-500 text-[11px] select-all">{client.email}</div>
                     </td>
                     <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase ${client.role === 'ADMIN' ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-700'}`}>
+                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase ${client.role === 'ADMIN' ? 'bg-amber-100 text-amber-800' : client.role === 'MANAGER' ? 'bg-stone-200 text-stone-800' : 'bg-stone-100 text-stone-700'}`}>
                         {client.role}
                       </span>
                     </td>
@@ -106,7 +127,7 @@ export default function ClientsClient({ initialClients }: ClientsClientProps) {
                   </tr>
                 );
               })}
-              {filteredClients.length === 0 && (
+              {paginatedClients.length === 0 && (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-stone-400 font-medium">
                     No se encontraron clientes que coincidan con los filtros aplicados.
@@ -116,6 +137,63 @@ export default function ClientsClient({ initialClients }: ClientsClientProps) {
             </tbody>
           </table>
         </div>
+
+        {/* BARRA DE PAGINACIÓN MOBILE-FIRST */}
+        {totalPages > 1 && (
+          <nav 
+            aria-label="Paginación de clientes" 
+            className="p-4 border-t-2 border-stone-200 bg-stone-50 flex flex-col sm:flex-row items-center justify-between gap-4"
+          >
+            <div className="text-[11px] font-bold text-stone-500 uppercase tracking-wider text-center sm:text-left">
+              Mostrando página <span className="text-[#1C1816] font-black">{safeCurrentPage}</span> de <span className="text-[#1C1816] font-black">{totalPages}</span> <span className="text-stone-400">({filteredClients.length} clientes en total)</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-center">
+              <button
+                onClick={() => handlePageChange(safeCurrentPage - 1)}
+                disabled={safeCurrentPage <= 1}
+                className="flex-1 sm:flex-none px-3 py-2 rounded-xl border-2 border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-30 disabled:hover:bg-white text-[10px] font-black uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>Anterior</span>
+              </button>
+
+              <div className="flex items-center gap-1 mx-1 overflow-x-auto max-w-[180px] py-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  const isNearCurrent = Math.abs(page - safeCurrentPage) <= 1 || page === 1 || page === totalPages;
+                  
+                  if (!isNearCurrent) {
+                    if (page === 2 || page === totalPages - 1) {
+                      return <span key={page} className="px-1 text-stone-400 font-bold text-xs select-none">•••</span>;
+                    }
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`min-w-[28px] h-7 px-2 rounded-lg text-[10px] font-black transition-all flex items-center justify-center shrink-0 cursor-pointer ${
+                        safeCurrentPage === page
+                          ? "bg-[#1C1816] text-[#FFC107] shadow-sm scale-105"
+                          : "border-2 border-stone-200 bg-white text-stone-600 hover:bg-stone-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(safeCurrentPage + 1)}
+                disabled={safeCurrentPage >= totalPages}
+                className="flex-1 sm:flex-none px-3 py-2 rounded-xl border-2 border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-30 disabled:hover:bg-white text-[10px] font-black uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>Siguiente</span>
+              </button>
+            </div>
+          </nav>
+        )}
       </div>
     </div>
   );
